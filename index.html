@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Кинологический центр</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f7f6; --panel:#ffffff; --line:#e5eaef; --line2:#eef2f5;
+  --ink:#233038; --muted:#7c8894; --muted2:#9aa6b1;
+  --green:#3f8f78; --green-d:#347e69; --green-l:#e8f3ee;
+  --blue:#4a7fa4; --blue-l:#e9f1f8;
+  --amber:#c98a26; --amber-l:#fbf1de; --red:#c0503f; --red-l:#fbebe8;
+  --radius:14px; --shadow:0 2px 10px rgba(50,80,90,.05),0 8px 30px rgba(50,80,90,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45;
+  -webkit-text-size-adjust:100%}
+a{color:var(--green);text-decoration:none}
+button{font-family:inherit}
+
+/* ---------- layout ---------- */
+header{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.hwrap{max-width:1120px;margin:0 auto;padding:10px 16px;display:flex;
+  align-items:center;gap:14px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;white-space:nowrap}
+.brand .logo{font-size:22px}
+nav.tabs{display:flex;gap:2px;margin-left:6px;overflow-x:auto;flex:1}
+nav.tabs button{border:0;background:none;color:var(--muted);font-size:14.5px;
+  padding:9px 13px;border-radius:9px;cursor:pointer;white-space:nowrap;font-weight:500}
+nav.tabs button.active{background:var(--green-l);color:var(--green-d);font-weight:600}
+nav.tabs button:hover{color:var(--ink)}
+.hspace{flex:1}
+.logout{color:var(--muted2);font-size:13px;padding:6px 10px;border:1px solid var(--line);
+  border-radius:8px;white-space:nowrap}
+main{max-width:1120px;margin:0 auto;padding:18px 16px 90px}
+
+h2.page{font-size:22px;margin:4px 0 16px;font-weight:700}
+.sub{color:var(--muted);font-size:13.5px}
+
+/* ---------- toolbar / search ---------- */
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.search{flex:1;min-width:180px;position:relative}
+.search input{width:100%;padding:11px 13px 11px 38px;border:1px solid var(--line);
+  border-radius:11px;font-size:15px;background:var(--panel);outline:none}
+.search input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(63,143,120,.13)}
+.search::before{content:"🔍";position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  font-size:14px;opacity:.5}
+select.filter{padding:10px 12px;border:1px solid var(--line);border-radius:11px;
+  background:var(--panel);font-size:14px;outline:none}
+
+/* ---------- buttons ---------- */
+.btn{border:0;border-radius:11px;padding:11px 17px;font-size:14.5px;font-weight:600;
+  cursor:pointer;background:var(--green);color:#fff;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{background:var(--green-d)}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:9px}
+.btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--line2)}
+.btn.blue{background:var(--blue)}.btn.blue:hover{filter:brightness(.94)}
+.btn.danger{background:var(--red)}.btn.danger:hover{filter:brightness(.94)}
+.btn.amber{background:var(--amber)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---------- cards / grid ---------- */
+.grid{display:grid;gap:13px}
+.stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;box-shadow:var(--shadow)}
+.stat .n{font-size:28px;font-weight:800;line-height:1}
+.stat .l{color:var(--muted);font-size:13px;margin-top:5px}
+.stat.warn .n{color:var(--amber)}
+
+.list{display:grid;gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;box-shadow:var(--shadow)}
+.card .row1{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.card .title{font-weight:700;font-size:16px}
+.card .meta{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.5}
+.card .meta b{color:var(--ink);font-weight:600}
+.card .acts{display:flex;gap:6px;flex-shrink:0}
+.icon-btn{border:1px solid var(--line);background:var(--panel);border-radius:9px;
+  width:34px;height:34px;cursor:pointer;font-size:15px;color:var(--muted);display:grid;place-items:center}
+.icon-btn:hover{color:var(--ink);background:var(--line2)}
+.icon-btn.del:hover{color:var(--red);border-color:var(--red-l);background:var(--red-l)}
+
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;
+  background:var(--line2);color:var(--muted)}
+.tag.male{background:var(--blue-l);color:var(--blue)}
+.tag.female{background:#fbe9f2;color:#b0508a}
+.tag.green{background:var(--green-l);color:var(--green-d)}
+.tag.amber{background:var(--amber-l);color:var(--amber)}
+.tag.red{background:var(--red-l);color:var(--red)}
+.tag.blue{background:var(--blue-l);color:var(--blue)}
+.tag.grey{background:var(--line2);color:var(--muted)}
+
+.empty{text-align:center;color:var(--muted);padding:50px 20px}
+.empty .em{font-size:40px;opacity:.5}
+
+/* ---------- modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(30,45,55,.42);z-index:100;display:none;
+  align-items:flex-start;justify-content:center;padding:24px 14px;overflow-y:auto}
+.overlay.on{display:flex}
+.modal{background:var(--panel);border-radius:18px;width:min(660px,100%);
+  box-shadow:0 20px 60px rgba(20,40,50,.28);margin:auto}
+.modal.wide{width:min(920px,100%)}
+.modal .mhead{display:flex;justify-content:space-between;align-items:center;
+  padding:18px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);border-radius:18px 18px 0 0}
+.modal .mhead h3{margin:0;font-size:18px}
+.modal .mbody{padding:20px 22px}
+.modal .mfoot{padding:16px 22px;border-top:1px solid var(--line);display:flex;
+  gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:var(--panel);border-radius:0 0 18px 18px}
+.close{border:0;background:none;font-size:24px;color:var(--muted);cursor:pointer;line-height:1}
+
+/* ---------- forms ---------- */
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+.field label{font-size:12.5px;color:var(--muted);font-weight:600}
+.field label .req{color:var(--red)}
+.field input,.field select,.field textarea{padding:10px 12px;border:1px solid var(--line);
+  border-radius:10px;font-size:15px;background:var(--panel);outline:none;width:100%;font-family:inherit}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green);
+  box-shadow:0 0 0 3px rgba(63,143,120,.12)}
+.field textarea{resize:vertical;min-height:60px}
+.fieldset-title{grid-column:1/-1;font-size:13px;font-weight:700;color:var(--green-d);
+  margin:8px 0 -2px;border-bottom:1px solid var(--line2);padding-bottom:5px}
+
+/* ---------- table (desktop) ---------- */
+.tablewrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow)}
+table.data{width:100%;border-collapse:collapse;font-size:14px}
+table.data th,table.data td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line2);white-space:nowrap}
+table.data th{background:#f8fafb;color:var(--muted);font-size:12.5px;font-weight:600;position:sticky;top:0}
+table.data tr:hover td{background:#fafcfb}
+table.data td .in{padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:13.5px;width:100%}
+
+/* ---------- event detail ---------- */
+.flow{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+.flow .step{flex:1;min-width:90px;text-align:center;padding:9px 8px;border-radius:10px;
+  background:var(--line2);color:var(--muted);font-size:12.5px;font-weight:600;position:relative}
+.flow .step.done{background:var(--green-l);color:var(--green-d)}
+.flow .step.cur{background:var(--green);color:#fff;box-shadow:0 3px 10px rgba(63,143,120,.3)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;box-shadow:var(--shadow);margin-bottom:14px}
+.panel h3{margin:0 0 12px;font-size:16px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.docbtns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ---------- toast ---------- */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;
+  display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{background:#2b3a42;color:#fff;padding:11px 20px;border-radius:11px;font-size:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);animation:tin .2s}
+.toast.err{background:var(--red)}
+.toast.ok{background:var(--green)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+
+/* ---------- mobile ---------- */
+.only-mobile{display:none}
+@media(max-width:720px){
+  .only-mobile{display:block}
+  nav.tabs{position:fixed;bottom:0;left:0;right:0;background:var(--panel);
+    border-top:1px solid var(--line);z-index:45;margin:0;padding:4px 4px env(safe-area-inset-bottom);
+    justify-content:space-around;overflow-x:auto}
+  nav.tabs button{flex-direction:column;font-size:10.5px;gap:2px;padding:6px 6px;border-radius:8px;min-width:56px}
+  nav.tabs button .ti{font-size:19px}
+  nav.tabs button.active{background:none;color:var(--green-d)}
+  .hspace{display:none}
+  main{padding-bottom:80px}
+  .formgrid{grid-template-columns:1fr}
+  .hwrap{padding:9px 13px}
+  .brand{font-size:16px}
+  h2.page{font-size:19px}
+  .modal .mbody{padding:16px}
+}
+@media(min-width:721px){ nav.tabs button .ti{display:none} }
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <div class="brand"><span class="logo">🐕</span><span>Кинологический центр</span></div>
+    <nav class="tabs" id="tabs">
+      <button data-view="dashboard" class="active"><span class="ti">📊</span>Сводка</button>
+      <button data-view="dogs"><span class="ti">🐕</span>Собаки</button>
+      <button data-view="owners"><span class="ti">👤</span>Владельцы</button>
+      <button data-view="payments"><span class="ti">💳</span>Взносы</button>
+      <button data-view="events"><span class="ti">🏆</span>Выставки</button>
+      <button data-view="refs"><span class="ti">⚙️</span>Справочники</button>
+    </nav>
+    <a class="logout hspace" href="/logout">Выход</a>
+  </div>
+</header>
+<main id="app"></main>
+<div id="toast"></div>
+
+<!-- modal root -->
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+
+<script>
+// ============================================================ utils
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const app = $('#app');
+let REFS = {classes:[],grades:[],titles:[],ranks:[]};
+let OWNERS_CACHE = [];
+
+async function api(url,opts){
+  const r = await fetch(url,opts);
+  if(r.status===401){ location.href='/login'; return; }
+  const ct = r.headers.get('content-type')||'';
+  const data = ct.includes('json') ? await r.json() : await r.text();
+  if(!r.ok){ throw new Error((data&&data.error)||'Ошибка'); }
+  return data;
+}
+const get = u => api(u);
+const post = (u,b) => api(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});
+const del = u => api(u,{method:'DELETE'});
+
+function toast(msg,type=''){
+  const t=document.createElement('div');t.className='toast '+type;t.textContent=msg;
+  $('#toast').appendChild(t);setTimeout(()=>t.remove(),2600);
+}
+
+// ---------- modal ----------
+function openModal(html,wide){
+  const m=$('#modal'); m.className='modal'+(wide?' wide':''); m.innerHTML=html;
+  $('#overlay').classList.add('on'); document.body.style.overflow='hidden';
+}
+function closeModal(){ $('#overlay').classList.remove('on'); document.body.style.overflow=''; }
+$('#overlay').addEventListener('click',e=>{ if(e.target.id==='overlay') closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+function field(label,name,val,{type='text',req=false,opts=null,ph='',full=false,rows=0,list=null}={}){
+  const id='f_'+name;
+  let input;
+  if(opts){
+    input=`<select id="${id}" name="${name}">${opts.map(o=>{
+      const [v,t]=Array.isArray(o)?o:[o,o];
+      return `<option value="${esc(v)}" ${String(v)===String(val??'')?'selected':''}>${esc(t)}</option>`;
+    }).join('')}</select>`;
+  }else if(rows){
+    input=`<textarea id="${id}" name="${name}" rows="${rows}" placeholder="${esc(ph)}">${esc(val)}</textarea>`;
+  }else{
+    const dl=list?`list="dl_${name}"`:'';
+    input=`<input id="${id}" name="${name}" type="${type}" value="${esc(val==null?'':val)}" placeholder="${esc(ph)}" ${dl}>`;
+    if(list) input+=`<datalist id="dl_${name}">${list.map(o=>`<option value="${esc(o)}">`).join('')}</datalist>`;
+  }
+  return `<div class="field ${full?'full':''}"><label>${esc(label)}${req?' <span class=req>*</span>':''}</label>${input}</div>`;
+}
+function formVals(root){
+  const o={};
+  $$('input,select,textarea',root).forEach(el=>{ if(el.name) o[el.name]=el.value.trim(); });
+  return o;
+}
+
+// ============================================================ router
+const VIEWS={};
+let current='dashboard';
+async function boot(){
+  REFS = await get('/api/refs');
+  $$('#tabs button').forEach(b=>b.onclick=()=>go(b.dataset.view));
+  // deep link to event
+  const h=location.hash.match(/event-(\d+)/);
+  if(h){ go('events'); setTimeout(()=>openEvent(+h[1]),50); }
+  else go('dashboard');
+}
+function go(view){
+  current=view;
+  $$('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+  if(location.hash) history.replaceState(null,'',location.pathname);
+  (VIEWS[view]||(()=>{}))();
+}
+
+// ============================================================ DASHBOARD
+VIEWS.dashboard=async()=>{
+  app.innerHTML='<h2 class="page">Сводка</h2><div class="grid stats" id="st"></div>'+
+    '<h3 style="margin:22px 0 10px;font-size:16px">Ближайшие мероприятия</h3><div class="list" id="up"></div>';
+  const d=await get('/api/dashboard');
+  $('#st').innerHTML=`
+    ${stat('🐕',d.dogs,'Собак')}
+    ${stat('👤',d.owners,'Владельцев')}
+    ${stat('🏆',d.events,'Мероприятий')}
+    ${stat('💳',fmtMoney(d.debt),'Задолженность',d.debt>0)}`;
+  const up=$('#up');
+  if(!d.upcoming.length){ up.innerHTML=emptyBox('🗓','Нет запланированных мероприятий'); return; }
+  up.innerHTML=d.upcoming.map(e=>`
+    <div class="card" style="cursor:pointer" onclick="openEvent(${e.id})">
+      <div class="row1"><div>
+        <div class="title">${esc(e.name)}</div>
+        <div class="meta">${esc(e.event_date||'дата не указана')} · ${esc(e.rank||'')} · ${esc(e.place||'')}</div>
+      </div>${statusTag(e.status)}</div>
+    </div>`).join('');
+};
+const stat=(ic,n,l,warn)=>`<div class="stat ${warn?'warn':''}"><div class="n">${n}</div><div class="l">${ic} ${l}</div></div>`;
+const fmtMoney=v=>Number(v||0).toLocaleString('ru-RU')+' ₽';
+const emptyBox=(em,t)=>`<div class="empty"><div class="em">${em}</div><div>${esc(t)}</div></div>`;
+
+// ============================================================ OWNERS
+VIEWS.owners=async()=>{
+  app.innerHTML=`<h2 class="page">Владельцы / члены клуба</h2>
+    <div class="bar">
+      <div class="search"><input id="q" placeholder="Поиск по ФИО, телефону, номеру..."></div>
+      <button class="btn" onclick="ownerForm()">＋ Владелец</button>
+    </div><div class="list" id="list"></div>`;
+  const render=async()=>{
+    const items=await get('/api/owners?q='+encodeURIComponent($('#q').value||''));
+    OWNERS_CACHE=items;
+    const l=$('#list');
+    if(!items.length){ l.innerHTML=emptyBox('👤','Владельцев пока нет'); return; }
+    l.innerHTML=items.map(o=>`
+      <div class="card"><div class="row1"><div>
+        <div class="title">${esc(o.full_name)} ${o.member_no?`<span class="tag grey">№ ${esc(o.member_no)}</span>`:''}
+          ${o.status==='inactive'?'<span class="tag red">неактивен</span>':''}</div>
+        <div class="meta">
+          ${o.phone?`📞 ${esc(o.phone)} `:''}${o.email?`· ✉ ${esc(o.email)} `:''}
+          ${o.address?`<br>📍 ${esc(o.address)}`:''}
+          <br><b>${o.dogs_count}</b> собак ${o.member_since?`· в клубе с ${esc(o.member_since)}`:''}
+        </div></div>
+        <div class="acts">
+          <button class="icon-btn" title="Взносы" onclick="go('payments');setTimeout(()=>filterPayByOwner(${o.id}),60)">💳</button>
+          <button class="icon-btn" title="Собаки" onclick="go('dogs');setTimeout(()=>filterDogsByOwner(${o.id}),60)">🐕</button>
+          <button class="icon-btn" onclick="ownerForm(${o.id})">✏️</button>
+          <button class="icon-btn del" onclick="delOwner(${o.id})">🗑</button>
+        </div></div></div>`).join('');
+  };
+  $('#q').addEventListener('input',debounce(render,250));
+  render();
+};
+async function ownerForm(id){
+  let o={};
+  if(id){ o=OWNERS_CACHE.find(x=>x.id===id)||await get('/api/owners').then(a=>a.find(x=>x.id===id)); }
+  openModal(`
+    <div class="mhead"><h3>${id?'Владелец':'Новый владелец'}</h3><button class="close" onclick="closeModal()">×</button></div>
+    <div class="mbody"><form id="frm" class="formgrid">
+      ${field('ФИО','full_name',o.full_name,{req:true,full:true})}
+      ${field('Номер члена клуба','member_no',o.member_no)}
+      ${field('В клубе с (дата)','member_since',o.member_since,{ph:'2020-01-15'})}
+      ${field('Телефон','phone',o.phone,{type:'tel'})}
+      ${field('E-mail','email',o.email,{type:'email'})}
+      ${field('Адрес','address',o.address,{full:true})}
+      ${field('Статус','status',o.status||'active',{opts:[['active','Активен'],['inactive','Неактивен']]})}
+      ${field('Заметки','notes',o.notes,{full:true,rows:2})}
+    </form></div>
+    <div class="mfoot"><button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="saveOwner(${id||0})">Сохранить</button></div>`);
+}
+async function saveOwner(id){
+  const v=formVals($('#frm')); if(!v.full_name){toast('Укажите ФИО','err');return;}
+  if(id)v.id=id;
+  try{ await post('/api/owners',v); closeModal(); toast('Сохранено','ok'); VIEWS.owners(); }
+  catch(e){ toast(e.message,'err'); }
+}
+async function delOwner(id){
+  if(!confirm('Удалить владельца? Его собаки останутся без владельца.'))return;
+  await del('/api/owners/'+id); toast('Удалено'); VIEWS.owners();
+}
+
+// ============================================================ DOGS
+let dogsFilterOwner=0;
+function filterDogsByOwner(id){ dogsFilterOwner=id; VIEWS.dogs(); }
+VIEWS.dogs=async()=>{
+  app.innerHTML=`<h2 class="page">Собаки</h2>
+    <div class="bar">
+      <div class="search"><input id="q" placeholder="Поиск: кличка, порода, родословная, чип, клеймо..."></div>
+      <button class="btn" onclick="dogForm()">＋ Собака</button>
+    </div>
+    <div id="ownerfilter"></div>
+    <div class="list" id="list"></div>`;
+  const render=async()=>{
+    let url='/api/dogs?q='+encodeURIComponent($('#q').value||'');
+    if(dogsFilterOwner) url+='&owner_id='+dogsFilterOwner;
+    const items=await get(url);
+    const of=$('#ownerfilter');
+    if(dogsFilterOwner){
+      const nm=(items[0]&&items[0].owner_name)||'владелец';
+      of.innerHTML=`<div class="bar"><span class="tag blue">Владелец: ${esc(nm)}</span>
+        <button class="btn ghost sm" onclick="dogsFilterOwner=0;VIEWS.dogs()">× сбросить</button></div>`;
+    }else of.innerHTML='';
+    const l=$('#list');
+    if(!items.length){ l.innerHTML=emptyBox('🐕','Собак не найдено'); return; }
+    l.innerHTML=items.map(d=>`
+      <div class="card"><div class="row1"><div>
+        <div class="title">${esc(d.name)}
+          <span class="tag ${d.sex==='male'?'male':'female'}">${d.sex==='male'?'кобель':d.sex==='female'?'сука':'—'}</span></div>
+        <div class="meta">
+          <b>${esc(d.breed||'порода не указана')}</b> ${d.breed_group?`· ${esc(d.breed_group)}`:''} ${d.color?`· ${esc(d.color)}`:''}<br>
+          ${d.pedigree_number?`Родословная: ${esc(d.pedigree_number)} · `:''}${d.tattoo?`клеймо ${esc(d.tattoo)} · `:''}${d.chip?`чип ${esc(d.chip)}`:''}
+          <br>Владелец: <b>${esc(d.owner_name||'—')}</b> ${d.owner_phone?`· ${esc(d.owner_phone)}`:''}
+        </div></div>
+        <div class="acts">
+          <button class="icon-btn" onclick="dogCard(${d.id})" title="Карточка">👁</button>
+          <button class="icon-btn" onclick="dogForm(${d.id})">✏️</button>
+          <button class="icon-btn del" onclick="delDog(${d.id})">🗑</button>
+        </div></div></div>`).join('');
+  };
+  $('#q').addEventListener('input',debounce(render,250));
+  render();
+};
+async function ensureOwners(){ if(!OWNERS_CACHE.length) OWNERS_CACHE=await get('/api/owners'); return OWNERS_CACHE; }
+function breedGroups(){ return REFS._breedgroups||['FCI I Овчарки','FCI II Пинчеры, шнауцеры, молоссы','FCI III Терьеры','FCI IV Таксы','FCI V Шпицы и примитивные','FCI VI Гончие','FCI VII Легавые','FCI VIII Ретриверы, спаниели','FCI IX Декоративные','FCI X Борзые']; }
+async function dogForm(id){
+  await ensureOwners();
+  let d={};
+  if(id){ d=await get('/api/dogs/'+id); }
+  const ownerOpts=[['','— не указан —'],...OWNERS_CACHE.map(o=>[o.id,o.full_name])];
+  openModal(`
+    <div class="mhead"><h3>${id?'Собака: '+esc(d.name):'Новая собака'}</h3><button class="close" onclick="closeModal()">×</button></div>
+    <div class="mbody"><form id="frm" class="formgrid">
+      <div class="fieldset-title">Породные данные</div>
+      ${field('Группа пород','breed_group',d.breed_group,{list:breedGroups()})}
+      ${field('Порода','breed',d.breed,{req:true})}
+      ${field('Окрас','color',d.color)}
+      ${field('Кличка','name',d.name,{req:true})}
+      ${field('Пол','sex',d.sex,{opts:[['','—'],['male','Кобель'],['female','Сука']]})}
+      ${field('Дата рождения','dob',d.dob,{ph:'2022-05-10'})}
+      <div class="fieldset-title">Идентификация</div>
+      ${field('Номер родословной','pedigree_number',d.pedigree_number)}
+      ${field('Клеймо','tattoo',d.tattoo)}
+      ${field('Чип','chip',d.chip)}
+      <div class="fieldset-title">Происхождение</div>
+      ${field('Кличка отца','sire_name',d.sire_name)}
+      ${field('Родословная отца','sire_pedigree',d.sire_pedigree)}
+      ${field('Кличка матери','dam_name',d.dam_name)}
+      ${field('Родословная матери','dam_pedigree',d.dam_pedigree)}
+      ${field('Заводчик','breeder',d.breeder,{full:true})}
+      <div class="fieldset-title">Принадлежность</div>
+      ${field('Владелец','owner_id',d.owner_id,{opts:ownerOpts,full:true})}
+      ${field('Заметки','notes',d.notes,{full:true,rows:2})}
+    </form></div>
+    <div class="mfoot">
+      <button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="saveDog(${id||0})">Сохранить</button></div>`,true);
+}
+async function saveDog(id){
+  const v=formVals($('#frm'));
+  if(!v.name){toast('Укажите кличку','err');return;}
+  if(id)v.id=id;
+  try{ await post('/api/dogs',v); closeModal(); toast('Сохранено','ok'); VIEWS.dogs(); }
+  catch(e){ toast(e.message,'err'); }
+}
+async function delDog(id){
+  if(!confirm('Удалить собаку? Записи о ней в выставках тоже удалятся.'))return;
+  await del('/api/dogs/'+id); toast('Удалено'); VIEWS.dogs();
+}
+async function dogCard(id){
+  const d=await get('/api/dogs/'+id);
+  const ev=(d.events||[]).map(e=>`<tr><td>${esc(e.event_date||'')}</td><td>${esc(e.name)}</td>
+    <td>${esc(e.class_name||'')}</td><td>${esc(e.grade||'')}</td><td>${esc(e.titles||'')}</td></tr>`).join('')
+    || '<tr><td colspan=5 class=sub>Ещё не участвовала</td></tr>';
+  openModal(`
+    <div class="mhead"><h3>${esc(d.name)}</h3><button class="close" onclick="closeModal()">×</button></div>
+    <div class="mbody">
+      <dl class="kv">
+        <dt>Порода</dt><dd>${esc(d.breed||'—')} ${d.breed_group?'· '+esc(d.breed_group):''}</dd>
+        <dt>Пол / окрас</dt><dd>${d.sex==='male'?'кобель':d.sex==='female'?'сука':'—'} · ${esc(d.color||'—')}</dd>
+        <dt>Родословная</dt><dd>${esc(d.pedigree_number||'—')}</dd>
+        <dt>Клеймо / чип</dt><dd>${esc(d.tattoo||'—')} / ${esc(d.chip||'—')}</dd>
+        <dt>Отец</dt><dd>${esc(d.sire_name||'—')} ${d.sire_pedigree?'('+esc(d.sire_pedigree)+')':''}</dd>
+        <dt>Мать</dt><dd>${esc(d.dam_name||'—')} ${d.dam_pedigree?'('+esc(d.dam_pedigree)+')':''}</dd>
+        <dt>Заводчик</dt><dd>${esc(d.breeder||'—')}</dd>
+      </dl>
+      <h3 style="margin:18px 0 8px;font-size:15px">История выставок</h3>
+      <div class="tablewrap"><table class="data"><tr><th>Дата</th><th>Мероприятие</th><th>Класс</th><th>Оценка</th><th>Титулы</th></tr>${ev}</table></div>
+    </div>
+    <div class="mfoot"><button class="btn ghost" onclick="closeModal()">Закрыть</button>
+      <button class="btn" onclick="dogForm(${id})">Редактировать</button></div>`,true);
+}
+
+// ============================================================ PAYMENTS
+let payFilterOwner=0;
+function filterPayByOwner(id){ payFilterOwner=id; VIEWS.payments(); }
+const CAT={membership:'Членский взнос',registration:'Регистрация собаки',show_entry:'Участие в выставке',other:'Прочее'};
+VIEWS.payments=async()=>{
+  app.innerHTML=`<h2 class="page">Взносы и платежи</h2>
+    <div class="bar">
+      <select class="filter" id="fcat"><option value="">Все категории</option>
+        ${Object.entries(CAT).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select>
+      <select class="filter" id="fst"><option value="">Все статусы</option>
+        <option value="paid">Оплачено</option><option value="debt">Задолженность</option></select>
+      <div class="hspace" style="flex:1"></div>
+      <button class="btn" onclick="payForm()">＋ Платёж</button>
+    </div>
+    <div id="ownerfilter"></div>
+    <div class="grid stats" id="sum" style="margin-bottom:14px"></div>
+    <div class="list" id="list"></div>`;
+  const render=async()=>{
+    let url='/api/payments?';
+    if(payFilterOwner)url+='owner_id='+payFilterOwner+'&';
+    if($('#fcat').value)url+='category='+$('#fcat').value+'&';
+    if($('#fst').value)url+='status='+$('#fst').value;
+    const r=await get(url);
+    $('#sum').innerHTML=stat('✅',fmtMoney(r.total_paid),'Собрано')+stat('⚠️',fmtMoney(r.total_debt),'Задолженность',r.total_debt>0);
+    const of=$('#ownerfilter');
+    of.innerHTML=payFilterOwner?`<div class="bar"><span class="tag blue">Владелец: ${esc((r.items[0]&&r.items[0].owner_name)||'—')}</span>
+      <button class="btn ghost sm" onclick="payFilterOwner=0;VIEWS.payments()">× сбросить</button></div>`:'';
+    const l=$('#list');
+    if(!r.items.length){ l.innerHTML=emptyBox('💳','Платежей нет'); return; }
+    l.innerHTML=r.items.map(p=>`
+      <div class="card"><div class="row1"><div>
+        <div class="title">${fmtMoney(p.amount)} <span class="tag ${p.status==='debt'?'red':'green'}">${p.status==='debt'?'долг':'оплачено'}</span></div>
+        <div class="meta"><b>${CAT[p.category]||p.category||'—'}</b> · ${esc(p.owner_name||'—')}
+          ${p.dog_name?`· 🐕 ${esc(p.dog_name)}`:''} ${p.event_name?`· 🏆 ${esc(p.event_name)}`:''}
+          <br>${esc(p.pay_date||'')} ${p.period?`· период: ${esc(p.period)}`:''} ${p.note?`· ${esc(p.note)}`:''}</div>
+      </div><div class="acts">
+        <button class="icon-btn" onclick="payForm(${p.id})">✏️</button>
+        <button class="icon-btn del" onclick="delPay(${p.id})">🗑</button>
+      </div></div></div>`).join('');
+  };
+  $('#fcat').onchange=render; $('#fst').onchange=render;
+  render();
+};
+async function payForm(id){
+  await ensureOwners();
+  let p={};
+  if(id){ const r=await get('/api/payments'); p=r.items.find(x=>x.id===id)||{}; }
+  const dogs=await get('/api/dogs');
+  const events=await get('/api/events');
+  const today=new Date().toISOString().slice(0,10);
+  openModal(`
+    <div class="mhead"><h3>${id?'Платёж':'Новый платёж'}</h3><button class="close" onclick="closeModal()">×</button></div>
+    <div class="mbody"><form id="frm" class="formgrid">
+      ${field('Категория','category',p.category||'membership',{opts:Object.entries(CAT),full:true})}
+      ${field('Владелец','owner_id',p.owner_id||payFilterOwner,{opts:[['','—'],...OWNERS_CACHE.map(o=>[o.id,o.full_name])]})}
+      ${field('Собака (необяз.)','dog_id',p.dog_id,{opts:[['','—'],...dogs.map(d=>[d.id,d.name+' ('+(d.breed||'')+')'])]})}
+      ${field('Мероприятие (необяз.)','event_id',p.event_id,{opts:[['','—'],...events.map(e=>[e.id,e.name])]})}
+      ${field('Сумма, ₽','amount',p.amount!=null?p.amount:'',{type:'number'})}
+      ${field('Дата','pay_date',p.pay_date||today,{ph:today})}
+      ${field('Период','period',p.period,{ph:'2026 / за год'})}
+      ${field('Статус','status',p.status||'paid',{opts:[['paid','Оплачено'],['debt','Задолженность']]})}
+      ${field('Примечание','note',p.note,{full:true,rows:2})}
+    </form></div>
+    <div class="mfoot"><button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="savePay(${id||0})">Сохранить</button></div>`,true);
+}
+async function savePay(id){
+  const v=formVals($('#frm')); if(!v.owner_id){toast('Выберите владельца','err');return;}
+  if(id)v.id=id;
+  try{ await post('/api/payments',v); closeModal(); toast('Сохранено','ok'); VIEWS.payments(); }
+  catch(e){ toast(e.message,'err'); }
+}
+async function delPay(id){ if(!confirm('Удалить платёж?'))return; await del('/api/payments/'+id); toast('Удалено'); VIEWS.payments(); }
+
+// ============================================================ EVENTS
+const EVTYPE={show:'Выставка',test:'Тестирование',competition:'Соревнование',other:'Мероприятие'};
+const STATUS={draft:'Черновик',reg_open:'Запись открыта',reg_closed:'Запись закрыта',judging:'Экспертиза',finished:'Завершено'};
+const STATUS_ORDER=['draft','reg_open','reg_closed','judging','finished'];
+function statusTag(s){
+  const cls={draft:'grey',reg_open:'blue',reg_closed:'amber',judging:'amber',finished:'green'}[s]||'grey';
+  return `<span class="tag ${cls}">${STATUS[s]||s}</span>`;
+}
+VIEWS.events=async()=>{
+  app.innerHTML=`<h2 class="page">Мероприятия</h2>
+    <div class="bar"><div class="hspace" style="flex:1"></div>
+      <button class="btn" onclick="eventForm()">＋ Мероприятие</button></div>
+    <div class="list" id="list"></div>`;
+  const items=await get('/api/events');
+  const l=$('#list');
+  if(!items.length){ l.innerHTML=emptyBox('🏆','Мероприятий пока нет'); return; }
+  l.innerHTML=items.map(e=>`
+    <div class="card" style="cursor:pointer" onclick="openEvent(${e.id})"><div class="row1"><div>
+      <div class="title">${esc(e.name)} <span class="tag grey">${EVTYPE[e.type]||''}</span></div>
+      <div class="meta"><b>${esc(e.rank||'без ранга')}</b> · ${esc(e.event_date||'дата не указана')} · ${esc(e.place||'')}
+        <br>🐕 записано: <b>${e.entries_count}</b></div>
+    </div>${statusTag(e.status)}</div></div>`).join('');
+};
+async function eventForm(id){
+  let e={};
+  if(id){ const items=await get('/api/events'); e=items.find(x=>x.id===id)||{}; }
+  openModal(`
+    <div class="mhead"><h3>${id?'Мероприятие':'Новое мероприятие'}</h3><button class="close" onclick="closeModal()">×</button></div>
+    <div class="mbody"><form id="frm" class="formgrid">
+      ${field('Название','name',e.name,{req:true,full:true})}
+      ${field('Тип','type',e.type||'show',{opts:Object.entries(EVTYPE)})}
+      ${field('Ранг','rank',e.rank,{list:REFS.ranks.map(r=>r.name)})}
+      ${field('Дата','event_date',e.event_date,{ph:'2026-09-20'})}
+      ${field('Место проведения','place',e.place)}
+      ${field('Судья(и)','judges',e.judges,{full:true,ph:'ФИО эксперта(ов)'})}
+      ${field('Описание','description',e.description,{full:true,rows:2})}
+    </form></div>
+    <div class="mfoot"><button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="saveEvent(${id||0})">Сохранить</button></div>`);
+}
+async function saveEvent(id){
+  const v=formVals($('#frm')); if(!v.name){toast('Укажите название','err');return;}
+  if(id)v.id=id;
+  try{ const r=await post('/api/events',v); closeModal(); toast('Сохранено','ok');
+    openEvent(r.id||id); }catch(e){ toast(e.message,'err'); }
+}
+
+// ---------- event detail ----------
+async function openEvent(id){
+  go('events');
+  const e=await get('/api/events/'+id);
+  const idx=STATUS_ORDER.indexOf(e.status);
+  const flow=STATUS_ORDER.map((s,i)=>`<div class="step ${i<idx?'done':i===idx?'cur':''}">${STATUS[s]}</div>`).join('');
+  const canReg=['draft','reg_open'].includes(e.status);
+  app.innerHTML=`
+    <div class="bar"><button class="btn ghost sm" onclick="VIEWS.events()">← Все мероприятия</button>
+      <div class="hspace" style="flex:1"></div>
+      <button class="btn ghost sm" onclick="eventForm(${id})">✏️ Изменить</button>
+      <button class="btn danger sm" onclick="delEvent(${id})">🗑 Удалить</button></div>
+    <h2 class="page">${esc(e.name)} ${statusTag(e.status)}</h2>
+    <div class="flow">${flow}</div>
+
+    <div class="panel"><h3>Информация</h3>
+      <dl class="kv">
+        <dt>Тип</dt><dd>${EVTYPE[e.type]||''}</dd>
+        <dt>Ранг</dt><dd>${esc(e.rank||'—')}</dd>
+        <dt>Дата</dt><dd>${esc(e.event_date||'—')}</dd>
+        <dt>Место</dt><dd>${esc(e.place||'—')}</dd>
+        <dt>Судья(и)</dt><dd>${esc(e.judges||'—')}</dd>
+        ${e.description?`<dt>Описание</dt><dd>${esc(e.description)}</dd>`:''}
+      </dl>
+    </div>
+
+    <div class="panel"><h3>Управление этапами</h3>
+      <div class="docbtns">
+        ${e.status==='draft'?`<button class="btn" onclick="setStatus(${id},'reg_open')">▶ Открыть запись</button>`:''}
+        ${e.status==='reg_open'?`<button class="btn amber" onclick="formCatalog(${id})">🔒 Закрыть запись и сформировать каталог</button>`:''}
+        ${e.status==='reg_closed'?`<button class="btn blue" onclick="setStatus(${id},'judging')">⚖ Начать экспертизу</button>`:''}
+        ${e.status==='judging'?`<button class="btn" onclick="setStatus(${id},'finished')">🏁 Завершить</button>`:''}
+        ${idx>0?`<button class="btn ghost" onclick="setStatus(${id},'${STATUS_ORDER[idx-1]}')">↩ Вернуть на «${STATUS[STATUS_ORDER[idx-1]]}»</button>`:''}
+      </div>
+    </div>
+
+    <div class="panel"><h3>Документы</h3>
+      <div class="docbtns">
+        <a class="btn ghost" href="/print/catalog/${id}" target="_blank">📖 Каталог</a>
+        <a class="btn ghost" href="/print/ringsheet/${id}" target="_blank">📋 Ринговая ведомость</a>
+        <a class="btn ghost" href="/print/diplomas/${id}" target="_blank">🎖 Дипломы</a>
+        <a class="btn ghost" href="/print/report/${id}" target="_blank">📑 Отчёт</a>
+      </div>
+      <div class="sub" style="margin-top:8px">Каталог и ведомость доступны после формирования каталога; дипломы — после проставления оценок.</div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px">
+        <h3 style="margin:0">Записанные собаки · ${e.stats.total}
+          <span class="sub">(оценено ${e.stats.graded})</span></h3>
+        ${canReg?`<button class="btn sm" onclick="addEntryDialog(${id})">＋ Записать собак</button>`:''}
+      </div>
+      <div id="entries"></div>
+    </div>`;
+  renderEntries(e);
+}
+function renderEntries(e){
+  const box=$('#entries');
+  if(!e.entries.length){ box.innerHTML=emptyBox('🐕','Собаки не записаны'); return; }
+  const judging=['judging','finished','reg_closed'].includes(e.status);
+  const gradeOpts=['',...REFS.grades.map(g=>g.name)];
+  const titleOpts=REFS.titles.map(t=>t.name);
+  // desktop table
+  const rows=e.entries.map(x=>{
+    const badge=`<span class="tag ${x.sex==='male'?'male':'female'}" style="font-size:11px">${x.sex==='male'?'К':x.sex==='female'?'С':'—'}</span>`;
+    if(judging){
+      return `<tr>
+        <td class="c">${x.catalog_no||'—'}</td>
+        <td><b>${esc(x.dog_name)}</b> ${badge}<br><span class="sub">${esc(x.breed||'')}</span></td>
+        <td>${esc(x.class_name||'')}</td>
+        <td><select class="in" onchange="updEntry(${x.id},'grade',this.value)">
+          ${gradeOpts.map(g=>`<option ${g===(x.grade||'')?'selected':''}>${esc(g)}</option>`).join('')}</select></td>
+        <td><input class="in" style="width:52px" type="number" min="1" max="20" value="${x.placement||''}"
+            onchange="updEntry(${x.id},'placement',this.value)"></td>
+        <td><input class="in" list="dl_titles" value="${esc(x.titles||'')}" placeholder="титулы"
+            onchange="updEntry(${x.id},'titles',this.value)"></td>
+        <td><input class="in" value="${esc(x.remark||'')}" placeholder="описание"
+            onchange="updEntry(${x.id},'remark',this.value)"></td>
+        <td><button class="icon-btn del" onclick="delEntry(${x.id},${e.id})">🗑</button></td></tr>`;
+    }
+    const clsSel=['draft','reg_open'].includes(e.status)
+      ? `<select class="in" onchange="updEntry(${x.id},'class_name',this.value)">
+          <option value="">— класс —</option>
+          ${REFS.classes.map(c=>`<option ${c.name===(x.class_name||'')?'selected':''}>${esc(c.name)}</option>`).join('')}</select>`
+      : esc(x.class_name||'');
+    return `<tr>
+      <td class="c">${x.catalog_no||'—'}</td>
+      <td><b>${esc(x.dog_name)}</b> ${badge}<br><span class="sub">${esc(x.breed||'')} · ${esc(x.owner_name||'')}</span></td>
+      <td>${clsSel}</td>
+      <td>${esc(x.pedigree_number||'')}</td>
+      <td><button class="icon-btn del" onclick="delEntry(${x.id},${e.id})">🗑</button></td></tr>`;
+  }).join('');
+  const head=judging
+    ? `<tr><th>№</th><th>Собака</th><th>Класс</th><th>Оценка</th><th>Место</th><th>Титулы</th><th>Описание</th><th></th></tr>`
+    : `<tr><th>№</th><th>Собака</th><th>Класс</th><th>Родословная</th><th></th></tr>`;
+  box.innerHTML=`<div class="tablewrap"><table class="data">${head}${rows}</table></div>
+    <datalist id="dl_titles">${titleOpts.map(t=>`<option value="${esc(t)}">`).join('')}</datalist>`;
+}
+async function updEntry(eid,field,val){
+  try{ await post('/api/entries/'+eid,{[field]:val}); }catch(e){ toast(e.message,'err'); }
+}
+async function delEntry(eid,evid){ if(!confirm('Убрать собаку из мероприятия?'))return;
+  await del('/api/entries/'+eid); toast('Убрано'); openEvent(evid); }
+async function setStatus(id,st){ await post('/api/events/'+id+'/status',{status:st}); openEvent(id); }
+async function formCatalog(id){
+  if(!confirm('Закрыть запись и присвоить каталожные номера? Дальше собаки не добавляются (можно вернуть на предыдущий этап).'))return;
+  const r=await post('/api/events/'+id+'/form-catalog',{});
+  toast('Каталог сформирован: '+r.numbered+' собак','ok'); openEvent(id);
+}
+async function delEvent(id){ if(!confirm('Удалить мероприятие вместе со всеми записями?'))return;
+  await del('/api/events/'+id); toast('Удалено'); VIEWS.events(); }
+
+async function addEntryDialog(eid){
+  const dogs=await get('/api/dogs');
+  const e=await get('/api/events/'+eid);
+  const already=new Set(e.entries.map(x=>x.dog_id));
+  const avail=dogs.filter(d=>!already.has(d.id));
+  openModal(`
+    <div class="mhead"><h3>Записать собак на мероприятие</h3><button class="close" onclick="closeModal()">×</button></div>
+    <div class="mbody">
+      ${field('Класс (применится ко всем выбранным)','entry_class','',{opts:[['','— выбрать позже —'],...REFS.classes.map(c=>[c.name,c.name])],full:true})}
+      <div class="search" style="margin:6px 0 10px"><input id="dq" placeholder="Фильтр собак..."></div>
+      <div id="doglist" style="max-height:46vh;overflow-y:auto"></div>
+    </div>
+    <div class="mfoot"><button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="submitEntries(${eid})">Записать выбранных</button></div>`,true);
+  const render=()=>{
+    const q=($('#dq').value||'').toLowerCase();
+    const list=avail.filter(d=>!q||(d.name+' '+(d.breed||'')+' '+(d.owner_name||'')).toLowerCase().includes(q));
+    $('#doglist').innerHTML=list.length?list.map(d=>`
+      <label class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer;padding:10px 12px;margin-bottom:7px">
+        <input type="checkbox" class="dchk" value="${d.id}" style="width:18px;height:18px">
+        <div><b>${esc(d.name)}</b> <span class="sub">${esc(d.breed||'')} · ${d.sex==='male'?'кобель':d.sex==='female'?'сука':'—'} · ${esc(d.owner_name||'')}</span></div>
+      </label>`).join(''):emptyBox('🐕',avail.length?'Ничего не найдено':'Все собаки уже записаны');
+  };
+  $('#dq').addEventListener('input',render); render();
+}
+async function submitEntries(eid){
+  const ids=$$('.dchk').filter(c=>c.checked).map(c=>+c.value);
+  if(!ids.length){toast('Выберите хотя бы одну собаку','err');return;}
+  const cls=$('#f_entry_class')?$('#f_entry_class').value:'';
+  const r=await post('/api/events/'+eid+'/entries',{dog_ids:ids,class_name:cls});
+  closeModal(); toast('Записано: '+r.added,'ok'); openEvent(eid);
+}
+
+// ============================================================ REFS
+const REFLABEL={classes:'Классы',grades:'Оценки',titles:'Титулы',ranks:'Ранги выставок'};
+VIEWS.refs=async()=>{
+  REFS=await get('/api/refs');
+  app.innerHTML=`<h2 class="page">Справочники</h2>
+    <p class="sub" style="margin-top:-8px">Базовые значения РКФ/FCI. Добавляйте и удаляйте под свой клуб — изменения сразу видны в формах выставок.</p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:14px" id="refgrid"></div>`;
+  const g=$('#refgrid');
+  g.innerHTML=Object.keys(REFLABEL).map(kind=>`
+    <div class="panel"><h3>${REFLABEL[kind]}</h3>
+      <div id="ref_${kind}"></div>
+      <div class="bar" style="margin:10px 0 0">
+        <div class="search" style="flex:1"><input id="new_${kind}" placeholder="Добавить...">
+        </div><button class="btn sm" onclick="addRef('${kind}')">＋</button></div>
+    </div>`).join('');
+  Object.keys(REFLABEL).forEach(renderRef);
+};
+function renderRef(kind){
+  const box=$('#ref_'+kind);
+  box.innerHTML=REFS[kind].map(r=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:1px solid var(--line2)">
+      <span>${esc(r.name)}</span>
+      <button class="icon-btn del" style="width:28px;height:28px;font-size:13px" onclick="delRef('${kind}',${r.id})">×</button>
+    </div>`).join('')||'<div class="sub">Пусто</div>';
+}
+async function addRef(kind){
+  const inp=$('#new_'+kind); const name=inp.value.trim(); if(!name)return;
+  const r=await post('/api/refs/'+kind,{name}); REFS[kind].push({id:r.id,name:r.name});
+  inp.value=''; renderRef(kind);
+}
+async function delRef(kind,id){
+  await del('/api/refs/'+kind+'/'+id);
+  REFS[kind]=REFS[kind].filter(x=>x.id!==id); renderRef(kind);
+}
+
+// ============================================================ misc
+function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
+boot();
+</script>
+</body>
+</html>

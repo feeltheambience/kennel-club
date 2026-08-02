@@ -1,0 +1,6 @@
+.venv_test/
+venv/
+__pycache__/
+*.pyc
+kennel.db
+_srv.log
