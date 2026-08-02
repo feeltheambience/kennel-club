@@ -29,14 +29,19 @@ header{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.92);
   align-items:center;gap:14px}
 .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;white-space:nowrap}
 .brand .logo{font-size:22px}
-nav.tabs{display:flex;gap:2px;margin-left:6px;overflow-x:auto;flex:1}
-nav.tabs button{border:0;background:none;color:var(--muted);font-size:14.5px;
-  padding:9px 13px;border-radius:9px;cursor:pointer;white-space:nowrap;font-weight:500}
+nav.tabs{display:flex;gap:1px;margin-left:4px;overflow-x:auto;flex:1;
+  scrollbar-width:none;-ms-overflow-style:none}
+nav.tabs::-webkit-scrollbar{display:none;height:0;width:0}
+nav.tabs button{border:0;background:none;color:var(--muted);font-size:14px;
+  padding:9px 11px;border-radius:9px;cursor:pointer;white-space:nowrap;font-weight:500}
 nav.tabs button.active{background:var(--green-l);color:var(--green-d);font-weight:600}
 nav.tabs button:hover{color:var(--ink)}
 .hspace{flex:1}
-.logout{color:var(--muted2);font-size:13px;padding:6px 10px;border:1px solid var(--line);
-  border-radius:8px;white-space:nowrap}
+.logout{color:var(--muted2);font-size:13px;padding:6px 12px;border:1px solid var(--line);
+  border-radius:8px;white-space:nowrap;margin-left:auto;flex-shrink:0}
+/* на средних экранах прячем текст бренда — остаётся логотип, вкладки помещаются без скролла */
+@media(max-width:960px) and (min-width:721px){ .brand .txt{display:none} }
+@media(max-width:860px) and (min-width:721px){ nav.tabs button{padding:9px 8px;font-size:13px} }
 main{max-width:1120px;margin:0 auto;padding:18px 16px 90px}
 
 h2.page{font-size:22px;margin:4px 0 16px;font-weight:700}
@@ -186,7 +191,7 @@ table.data td .in{padding:6px 8px;border:1px solid var(--line);border-radius:7px
 <body>
 <header>
   <div class="hwrap">
-    <div class="brand"><span class="logo">🐕</span><span>Кинологический центр</span></div>
+    <div class="brand"><span class="logo">🐕</span><span class="txt">Кинологический центр</span></div>
     <nav class="tabs" id="tabs">
       <button data-view="dashboard" class="active"><span class="ti">📊</span>Сводка</button>
       <button data-view="dogs"><span class="ti">🐕</span>Собаки</button>
@@ -195,7 +200,7 @@ table.data td .in{padding:6px 8px;border:1px solid var(--line);border-radius:7px
       <button data-view="events"><span class="ti">🏆</span>Выставки</button>
       <button data-view="refs"><span class="ti">⚙️</span>Справочники</button>
     </nav>
-    <a class="logout hspace" href="/logout">Выход</a>
+    <a class="logout" href="/logout">Выход</a>
   </div>
 </header>
 <main id="app"></main>

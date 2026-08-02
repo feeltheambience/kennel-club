@@ -4,8 +4,12 @@ set -e
 cd /root/kennel-club
 PORT=8315
 
+# на редеплое порт держит наш же сервис — останавливаем перед bind-тестом,
+# чтобы проверить, что его не занял ЧУЖОЙ процесс
+systemctl stop kennel-club 2>/dev/null || true
+
 # bind-тест: не занят ли порт чужим процессом
-python3 - <<PY || { echo "ПОРТ $PORT ЗАНЯТ — правьте порт в install.sh и unit"; exit 1; }
+python3 - <<PY || { echo "ПОРТ $PORT ЗАНЯТ чужим процессом — правьте порт в install.sh и unit"; exit 1; }
 import socket
 s=socket.socket()
 try:
