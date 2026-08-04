@@ -236,6 +236,47 @@ table.data td .in.inplace{width:56px}
 .kv dd{margin:0;color:var(--ink)}
 .docbtns{display:flex;gap:9px;flex-wrap:wrap}
 
+/* сегмент-переключатель (Дерево/Карточки) */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:11px;overflow:hidden;
+  background:var(--panel);box-shadow:var(--shadow-sm)}
+.seg button{border:0;background:none;padding:8px 15px;font-size:13px;font-weight:600;
+  color:var(--muted);cursor:pointer;font-family:inherit;transition:.14s;display:flex;align-items:center;gap:6px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--green-l);color:var(--green-d)}
+.seg button:hover:not(.on){background:var(--panel-2);color:var(--ink)}
+
+/* дерево пород */
+.btree{margin-top:6px}
+.btree .grp{margin-bottom:5px}
+.btree .grp-head{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--panel);
+  border:1px solid var(--line);border-radius:11px;cursor:pointer;transition:.14s;box-shadow:var(--shadow-sm)}
+.btree .grp-head:hover{border-color:#d9cfba;background:var(--panel-2)}
+.btree .grp-head .tw{width:14px;color:var(--green);transition:transform .2s;font-size:11px;flex-shrink:0}
+.btree .grp.collapsed .grp-head .tw{transform:rotate(-90deg)}
+.btree .grp-head .gn{font-family:var(--serif);font-weight:600;font-size:15px;flex:1;min-width:0}
+.btree .grp-head .cnt{font-size:12px;color:#fff;background:var(--green);border-radius:20px;
+  min-width:22px;height:20px;padding:0 7px;display:grid;place-items:center;font-weight:600}
+.btree .grp-head .ga{display:flex;gap:4px;opacity:0;transition:.14s}
+.btree .grp-head:hover .ga{opacity:1}
+.btree .kids{margin:0 0 0 24px;padding:4px 0 4px 18px;border-left:2px solid var(--line);overflow:hidden}
+.btree .grp.collapsed .kids{display:none}
+.btree .leaf{position:relative;display:flex;align-items:center;gap:8px;padding:5px 9px;border-radius:8px}
+.btree .leaf::before{content:"";position:absolute;left:-18px;top:50%;width:15px;height:2px;
+  background:var(--line);border-radius:2px}
+.btree .leaf:hover{background:var(--panel-2)}
+.btree .leaf .ln{flex:1;font-size:14px;min-width:0}
+.btree .leaf .leafdel{opacity:0;width:26px;height:26px;font-size:14px;flex-shrink:0}
+.btree .leaf:hover .leafdel{opacity:1}
+.btree .leaf.mut{color:var(--muted);font-style:italic;font-size:13px}
+.btree .addrow{gap:6px;padding:7px 9px}
+.btree .addrow input{flex:1;min-width:0}
+@media(max-width:720px){
+  .btree .kids{margin-left:14px;padding-left:14px}
+  .btree .leaf::before{left:-14px;width:11px}
+  .btree .grp-head .ga{opacity:1}
+  .btree .leaf .leafdel{opacity:1}
+}
+
 /* ---------- toast ---------- */
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;
   display:flex;flex-direction:column;gap:8px;align-items:center}
@@ -929,6 +970,8 @@ async function submitEntries(eid){
 const REFTABS=[['breeds','🌳 Породы'],['classes','Классы'],['grades','Оценки'],['titles','Титулы'],['ranks','🏆 Ранги выставок'],['addresses','📍 Адреса']];
 const KINDLABEL={classes:'Классы',grades:'Оценки',titles:'Титулы'};
 let refTab='breeds';
+let breedView='tree';               // режим отображения пород: tree | cards
+const breedCollapsed=new Set();     // свёрнутые группы в дереве
 VIEWS.refs=async()=>{
   await loadRefs();
   app.innerHTML=`<h2 class="page">Справочники</h2>
@@ -986,17 +1029,58 @@ async function doBulk(kind){
   REFS=await get('/api/refs'); closeModal(); toast('Добавлено: '+r.added,'ok'); VIEWS.refs();
 }
 
-// ---- дерево пород ----
+// ---- дерево пород (два режима: дерево / карточки) ----
 function refBreeds(box){
-  box.innerHTML=`<p class="sub" style="margin-top:-4px">Группы FCI и породы внутри. Можно добавлять и переименовывать группы и породы, загружать списком.</p>
+  box.innerHTML=`<div class="bar" style="justify-content:space-between;align-items:flex-start;margin-top:-2px">
+      <p class="sub" style="margin:0;flex:1;min-width:180px">Группы FCI и породы внутри. Добавляйте и переименовывайте группы и породы, загружайте списком.</p>
+      <div class="seg" role="tablist">
+        <button class="${breedView==='tree'?'on':''}" onclick="setBreedView('tree')">🌳 Дерево</button>
+        <button class="${breedView==='cards'?'on':''}" onclick="setBreedView('cards')">🗂 Карточки</button>
+      </div></div>
     <div class="bar" style="margin:10px 0"><div class="search" style="flex:1">
       <input id="new_group" placeholder="Новая группа пород..." onkeydown="if(event.key==='Enter')addGroup()"></div>
       <button class="btn sm" onclick="addGroup()">＋ Группа</button></div>
     <div id="tree"></div>`;
   renderTree();
 }
+function setBreedView(m){ breedView=m; refBreeds($('#refbody')); }
 function renderTree(){
   const t=$('#tree'); if(!t)return;
+  if(!BREEDS.length){ t.innerHTML=emptyBox('🌳','Групп пока нет'); return; }
+  (breedView==='cards'?renderBreedCards:renderBreedTree)(t);
+}
+// режим ДЕРЕВО — ветви с линиями, сворачивание групп
+function renderBreedTree(t){
+  t.innerHTML='<div class="btree">'+BREEDS.map(g=>`
+    <div class="grp ${breedCollapsed.has(g.id)?'collapsed':''}">
+      <div class="grp-head" onclick="toggleGrp(${g.id})">
+        <span class="tw">▾</span>
+        <span class="gn">${esc(g.name)}</span>
+        <span class="cnt">${g.breeds.length}</span>
+        <span class="ga">
+          <button class="icon-btn" title="Переименовать" style="width:30px;height:30px;font-size:13px" onclick="event.stopPropagation();renameGroup(${g.id})">✏️</button>
+          <button class="icon-btn del" style="width:30px;height:30px;font-size:13px" onclick="event.stopPropagation();delGroup(${g.id})">🗑</button>
+        </span></div>
+      <div class="kids">
+        ${g.breeds.map(b=>`<div class="leaf"><span class="ln">${esc(b.name)}</span>
+          <button class="icon-btn del leafdel" onclick="delBreed(${b.id})">×</button></div>`).join('')
+          ||'<div class="leaf mut">пород нет</div>'}
+        <div class="leaf addrow">
+          <input id="nbt_${g.id}" class="in" placeholder="Добавить породу..." style="padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-family:inherit"
+            onkeydown="if(event.key==='Enter')addBreedTree(${g.id})">
+          <button class="btn sm" onclick="addBreedTree(${g.id})">＋</button>
+          <button class="btn ghost sm" title="Импорт списком" onclick="bulkBreeds(${g.id})">⇪</button>
+        </div></div>
+    </div>`).join('')+'</div>';
+}
+function toggleGrp(gid){ breedCollapsed.has(gid)?breedCollapsed.delete(gid):breedCollapsed.add(gid); renderTree(); }
+async function addBreedTree(gid){
+  const inp=$('#nbt_'+gid); const name=inp.value.trim(); if(!name)return;
+  await post('/api/breeds',{group_id:gid,name}); BREEDS=await get('/api/breeds');
+  breedCollapsed.delete(gid); renderTree(); setTimeout(()=>{const el=$('#nbt_'+gid);if(el)el.focus();},0);
+}
+// режим КАРТОЧКИ — группы-панели с породами-чипами
+function renderBreedCards(t){
   t.innerHTML=BREEDS.map(g=>`
     <div class="panel" style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
@@ -1013,7 +1097,7 @@ function renderTree(){
         <div class="search" style="flex:1"><input id="nb_${g.id}" placeholder="Добавить породу..." onkeydown="if(event.key==='Enter')addBreed(${g.id})"></div>
         <button class="btn sm" onclick="addBreed(${g.id})">＋</button>
         <button class="btn ghost sm" onclick="bulkBreeds(${g.id})">⇪ списком</button></div>
-    </div>`).join('')||emptyBox('🌳','Групп пока нет');
+    </div>`).join('');
 }
 async function addGroup(){
   const inp=$('#new_group'); const name=inp.value.trim(); if(!name)return;

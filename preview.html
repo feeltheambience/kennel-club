@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Превью дизайна — Кинологический центр</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prata&family=Cormorant:wght@500;600;700&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f6efe1;      /* пергамент фон */
+  --card:#fbf6ec;       /* лист */
+  --ink:#211d17;        /* чернила — высокий контраст */
+  --ink-2:#5b5142;      /* второстепенный текст */
+  --faint:#8a7f6b;
+  --rule:#ddceb2;       /* линейки */
+  --rule-2:#ece0c8;
+  --baize:#1f3d31;      /* сукно ринга (сайдбар) */
+  --baize-d:#183026;
+  --brass:#c19a44;      /* латунь */
+  --brass-l:#e3c987;
+  --seal:#8a2b28;       /* оксбладовая печать */
+  --pine:#2f6b4f;       /* хвоя — данные */
+  --serif:'Prata',Georgia,serif;
+  --serif-2:'Cormorant',Georgia,serif;
+  --sans:'Golos Text',-apple-system,Segoe UI,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:15px;line-height:1.5}
+/* бумажное зерно */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.wrap{display:grid;grid-template-columns:248px 1fr;min-height:100vh;position:relative;z-index:2}
+
+/* ============================ SIDEBAR (сукно + латунь) */
+aside{background:
+    linear-gradient(180deg,var(--baize),var(--baize-d));
+  color:#e9e2cf;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;
+  border-right:1px solid #0d1c16;box-shadow:inset -8px 0 24px rgba(0,0,0,.22)}
+aside::before{content:"";position:absolute;inset:0;opacity:.06;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.crest{padding:26px 22px 18px;text-align:center;border-bottom:1px solid rgba(201,162,74,.28);position:relative}
+.crest svg{width:52px;height:57px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+.crest .name{font-family:var(--serif);font-size:17px;letter-spacing:.5px;margin-top:8px;color:#f3ecd8}
+.crest .est{font-family:var(--mono);font-size:9.5px;letter-spacing:2.5px;color:var(--brass-l);margin-top:5px;text-transform:uppercase}
+nav{padding:14px 12px;flex:1}
+nav .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;color:#8fa094;text-transform:uppercase;margin:12px 12px 8px}
+nav a{display:flex;align-items:center;gap:11px;padding:10px 13px;color:#d5cdb8;border-radius:8px;
+  text-decoration:none;font-size:14.5px;font-weight:500;letter-spacing:.2px;position:relative;transition:.15s}
+nav a .ic{width:19px;text-align:center;opacity:.75;font-size:15px}
+nav a:hover{background:rgba(255,255,255,.05);color:#fff}
+nav a.on{background:rgba(201,162,74,.14);color:#fbf3dd}
+nav a.on::before{content:"";position:absolute;left:0;top:7px;bottom:7px;width:3px;border-radius:3px;
+  background:linear-gradient(var(--brass-l),var(--brass))}
+aside .foot{padding:14px 20px;border-top:1px solid rgba(201,162,74,.22);font-family:var(--mono);
+  font-size:11px;letter-spacing:1px;color:#9aa89d;display:flex;justify-content:space-between;align-items:center}
+aside .foot a{color:#c9bfa6;text-decoration:none}
+
+/* ============================ MAIN (лист) */
+main{padding:0;position:relative}
+.sheet{max-width:1000px;margin:0 auto;padding:34px 46px 80px}
+
+/* мастхед страницы — как шапка печатной страницы */
+.masthead{border-top:2px solid var(--ink);padding-top:10px;margin-bottom:8px;position:relative}
+.masthead::after{content:"";position:absolute;left:0;right:0;top:3px;height:1px;background:var(--ink);opacity:.35}
+.runhead{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);
+  font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:var(--faint)}
+.title{font-family:var(--serif);font-size:38px;line-height:1.05;margin:10px 0 4px;letter-spacing:.3px}
+.subtitle{font-family:var(--serif-2);font-size:19px;color:var(--ink-2);font-style:italic;font-weight:500}
+.ornament{text-align:center;color:var(--brass);letter-spacing:8px;margin:22px 0 26px;font-size:13px}
+.ornament::before,.ornament::after{content:"— — —";color:var(--rule);letter-spacing:2px;margin:0 12px;font-size:11px;vertical-align:middle}
+
+/* сводка-цифры как строка гроссбуха */
+.figures{display:flex;flex-wrap:wrap;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:4px 0 8px}
+.fig{flex:1;min-width:150px;padding:20px 8px 18px;text-align:center;border-right:1px solid var(--rule-2);position:relative}
+.fig:last-child{border-right:0}
+.fig .n{font-family:var(--serif);font-size:40px;line-height:1;color:var(--ink);font-feature-settings:"tnum"}
+.fig.debt .n{color:var(--seal)}
+.fig .l{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);margin-top:9px}
+
+h2.sec{font-family:var(--serif);font-size:21px;margin:34px 0 4px;letter-spacing:.2px;
+  display:flex;align-items:baseline;gap:12px}
+h2.sec .no{font-family:var(--mono);font-size:12px;color:var(--brass);letter-spacing:1px}
+h2.sec::after{content:"";flex:1;height:1px;background:var(--rule);align-self:center}
+
+/* реестровая таблица (ближайшие выставки) */
+.ledger{width:100%;border-collapse:collapse;margin-top:10px}
+.ledger th{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--faint);text-align:left;padding:8px 10px;border-bottom:1.5px solid var(--ink)}
+.ledger td{padding:13px 10px;border-bottom:1px solid var(--rule-2);vertical-align:middle}
+.ledger tr:hover td{background:rgba(201,162,74,.05)}
+.ledger .ev{font-family:var(--serif-2);font-size:18px;font-weight:600}
+.ledger .meta{color:var(--faint);font-size:12.5px}
+.mono{font-family:var(--mono);font-size:12.5px;letter-spacing:.3px;color:var(--ink-2)}
+
+/* штамп-статус */
+.stamp{display:inline-block;font-family:var(--mono);font-weight:700;font-size:10.5px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--seal);border:2px solid var(--seal);border-radius:4px;
+  padding:4px 10px;transform:rotate(-3.5deg);box-shadow:inset 0 0 0 1px var(--seal);opacity:.9}
+.stamp.green{color:var(--pine);border-color:var(--pine);box-shadow:inset 0 0 0 1px var(--pine)}
+.stamp.brass{color:#8a6a1e;border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}
+
+/* ринг-нумерка (каталожный номер) */
+.armband{width:44px;height:44px;flex:0 0 44px;border-radius:50%;background:var(--card);
+  border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--serif);font-size:19px;
+  box-shadow:0 0 0 2px var(--card),0 0 0 3px var(--rule)}
+
+/* карточка выставки: каталог записей */
+.entry{display:flex;gap:16px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--rule-2)}
+.entry .body{flex:1;min-width:0}
+.entry .dog{font-family:var(--serif-2);font-size:20px;font-weight:700;letter-spacing:.2px}
+.entry .par{color:var(--faint);font-size:12.5px;font-style:italic;font-family:var(--serif-2)}
+.entry .line2{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:4px;font-size:12.5px;color:var(--ink-2);align-items:center}
+.pill{font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;
+  padding:2px 8px;border:1px solid var(--rule);border-radius:20px;color:var(--ink-2)}
+.pill.sex-m{border-color:#c3d2c9;color:#2f6b4f}
+.pill.sex-f{border-color:#e0c9d4;color:#9a4b74}
+.award{display:flex;align-items:center;gap:8px;font-family:var(--serif-2);font-weight:700;color:#8a6a1e;font-size:15px}
+.grade{font-family:var(--serif);font-size:15px;color:var(--pine)}
+
+/* степпер жизненного цикла — гравюрная линия с римскими цифрами */
+.flow{display:flex;align-items:flex-start;margin:8px 0 24px;padding:6px 0}
+.flow .st{flex:1;text-align:center;position:relative;padding-top:26px}
+.flow .st::after{content:"";position:absolute;top:9px;left:50%;right:-50%;height:1.5px;background:var(--rule)}
+.flow .st:last-child::after{display:none}
+.flow .st .dot{position:absolute;top:0;left:50%;transform:translateX(-50%);width:19px;height:19px;
+  border-radius:50%;background:var(--card);border:2px solid var(--rule);font-family:var(--mono);font-size:9px;
+  display:grid;place-items:center;color:var(--faint)}
+.flow .st.done .dot{background:var(--pine);border-color:var(--pine);color:#fff}
+.flow .st.cur .dot{background:var(--seal);border-color:var(--seal);color:#fff;box-shadow:0 0 0 4px rgba(138,43,40,.14)}
+.flow .st.done::after{background:var(--pine)}
+.flow .st .cap{font-family:var(--mono);font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--faint)}
+.flow .st.cur .cap{color:var(--seal);font-weight:700}
+.flow .st.done .cap{color:var(--ink-2)}
+
+/* родословная — мини-древо */
+.tree{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;margin-top:12px;position:relative}
+.tree .node{border:1px solid var(--rule);border-left:3px solid var(--brass);background:var(--card);
+  padding:9px 12px;border-radius:4px}
+.tree .node.self{grid-column:1/-1;border-left-color:var(--pine)}
+.tree .node .role{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint)}
+.tree .node .nm{font-family:var(--serif-2);font-size:16px;font-weight:600;margin-top:1px}
+.tree .node .id{font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-top:2px}
+
+.panel{border:1px solid var(--rule);background:var(--card);border-radius:6px;padding:20px 22px;margin-bottom:18px;
+  box-shadow:0 1px 0 #fff inset, 0 12px 30px rgba(80,60,20,.05)}
+.panel.framed{border:1.5px solid var(--ink);position:relative}
+.panel.framed::before{content:"";position:absolute;inset:5px;border:1px solid var(--rule);border-radius:3px;pointer-events:none}
+
+.two{display:grid;grid-template-columns:1.35fr 1fr;gap:22px}
+.kvp{display:grid;grid-template-columns:auto 1fr;gap:9px 16px;font-size:14px}
+.kvp dt{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);padding-top:3px}
+.kvp dd{margin:0;font-family:var(--serif-2);font-size:16px;font-weight:600}
+
+.hide{display:none}
+
+/* переключатель разделов (демо) */
+.viewbtn{cursor:pointer}
+
+/* ============================ адаптив: смартфон */
+@media(max-width:820px){
+  .wrap{grid-template-columns:1fr}
+  aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;
+    box-shadow:none;border-right:0;border-bottom:2px solid var(--baize-d)}
+  .crest{display:flex;align-items:center;gap:12px;text-align:left;border-bottom:0;padding:12px 16px;flex:1}
+  .crest svg{width:34px;height:37px}
+  .crest .name{margin-top:0;font-size:15px}
+  .crest .est{display:none}
+  nav{display:flex;overflow-x:auto;padding:0 8px 8px;gap:2px;width:100%;flex:1 0 100%}
+  nav .lbl{display:none}
+  nav a{flex-direction:column;gap:3px;font-size:10px;padding:7px 9px;white-space:nowrap;min-width:60px;text-align:center}
+  nav a .ic{font-size:18px}
+  nav a.on::before{display:none}
+  aside .foot{display:none}
+  .sheet{padding:22px 18px 60px}
+  .title{font-size:29px}
+  .two{grid-template-columns:1fr}
+  .fig{min-width:44%}
+  .entry{flex-wrap:wrap}
+  .flow{overflow-x:auto}
+  .flow .st{min-width:74px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside>
+    <div class="crest">
+      <svg viewBox="0 0 40 44" aria-hidden="true">
+        <path d="M14 29 L11 43 L17.5 38.5 L20 44 L20 29 Z" fill="#c19a44"/>
+        <path d="M26 29 L29 43 L22.5 38.5 L20 44 L20 29 Z" fill="#9c7a2f"/>
+        <circle cx="20" cy="17" r="15" fill="#e9e2cf"/>
+        <circle cx="20" cy="17" r="15" fill="none" stroke="#c19a44" stroke-width="1.3" stroke-dasharray="2.2 2.2"/>
+        <circle cx="20" cy="17" r="9.4" fill="#1f3d31"/>
+        <g fill="#e3c987"><ellipse cx="20" cy="19.2" rx="3.3" ry="2.7"/>
+          <circle cx="15.8" cy="15.2" r="1.5"/><circle cx="20" cy="13.7" r="1.6"/><circle cx="24.2" cy="15.2" r="1.5"/></g>
+      </svg>
+      <div>
+        <div class="name">Кинологический центр</div>
+        <div class="est">Племенная книга · EST. MMXXVI</div>
+      </div>
+    </div>
+    <nav>
+      <div class="lbl">Реестр</div>
+      <a class="viewbtn" data-v="dash"><span class="ic">❦</span>Сводка</a>
+      <a class="viewbtn on" data-v="show"><span class="ic">✦</span>Выставки</a>
+      <a><span class="ic">✦</span>Собаки</a>
+      <a><span class="ic">✦</span>Владельцы</a>
+      <a><span class="ic">✦</span>Взносы</a>
+      <div class="lbl">Настройка</div>
+      <a><span class="ic">✦</span>Справочники</a>
+    </nav>
+    <div class="foot"><span>DOGS · v2</span><a href="#">выход →</a></div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main>
+
+    <!-- ---------- ВЫСТАВКА (карточка) ---------- -->
+    <section class="sheet" id="show">
+      <div class="masthead">
+        <div class="runhead"><span>Кинологический центр · Каталог выставки</span><span>Лист 04</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap">
+          <div>
+            <div class="title">Осенняя Региональная</div>
+            <div class="subtitle">Ранг САС · Москва, СК «Олимп» · 20 сентября 2026</div>
+          </div>
+          <div style="text-align:right;padding-top:8px">
+            <div class="stamp">Запись открыта</div>
+            <div class="mono" style="margin-top:10px;color:var(--faint)">Эксперт: А. П. Сидоров</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow">
+        <div class="st done"><span class="dot">✓</span><div class="cap">Черновик</div></div>
+        <div class="st cur"><span class="dot">II</span><div class="cap">Запись</div></div>
+        <div class="st"><span class="dot">III</span><div class="cap">Каталог</div></div>
+        <div class="st"><span class="dot">IV</span><div class="cap">Экспертиза</div></div>
+        <div class="st"><span class="dot">V</span><div class="cap">Завершено</div></div>
+      </div>
+
+      <div class="two">
+        <div>
+          <h2 class="sec"><span class="no">§1</span>Записанные собаки</h2>
+
+          <div class="entry">
+            <div class="armband">1</div>
+            <div class="body">
+              <div class="dog">ГРОСС-ГЕРБЕР ВИКТОРИЯ</div>
+              <div class="par">о. Барон фон Хаус · м. Лада Стар</div>
+              <div class="line2">
+                <span>Немецкая овчарка</span>
+                <span class="pill sex-f">сука</span>
+                <span class="pill">откр. класс</span>
+                <span class="mono">RKF 5 412 883</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="entry">
+            <div class="armband">2</div>
+            <div class="body">
+              <div class="dog">ЛОРД ОФ ВИНТЕРФЕЛЛ</div>
+              <div class="par">о. Цезарь · м. Юнона</div>
+              <div class="line2">
+                <span>Ротвейлер</span>
+                <span class="pill sex-m">кобель</span>
+                <span class="pill">чемп. класс</span>
+                <span class="mono">RKF 5 118 204</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="entry">
+            <div class="armband">3</div>
+            <div class="body">
+              <div class="dog">АЙВЕНГО ЗОЛОТОЙ</div>
+              <div class="par">о. Голд Стар · м. Мальва</div>
+              <div class="line2">
+                <span>Лабрадор-ретривер</span>
+                <span class="pill sex-m">кобель</span>
+                <span class="pill">откр. класс</span>
+                <span class="mono">RKF 5 907 661</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel framed">
+            <h2 class="sec" style="margin-top:0"><span class="no">✦</span>Награда</h2>
+            <div style="display:flex;gap:16px;align-items:center">
+              <svg width="66" height="86" viewBox="0 0 66 86" aria-hidden="true">
+                <path d="M23 52 L15 84 L30 74 L33 86 L36 74 L51 84 L43 52 Z" fill="#8a2b28"/>
+                <path d="M23 52 L18 72 L33 66 L33 52 Z" fill="#6f2320"/>
+                <circle cx="33" cy="30" r="26" fill="none" stroke="#c19a44" stroke-width="2" stroke-dasharray="3 3"/>
+                <circle cx="33" cy="30" r="24" fill="#2f6b4f"/>
+                <circle cx="33" cy="30" r="15" fill="#f6efe1"/>
+                <text x="33" y="35" text-anchor="middle" font-family="Prata,serif" font-size="15" fill="#8a2b28">ЛПП</text>
+              </svg>
+              <div>
+                <div class="award">ГРОСС-ГЕРБЕР ВИКТОРИЯ</div>
+                <div class="grade" style="margin-top:4px">Оценка: Отлично · Место 1</div>
+                <div class="mono" style="margin-top:6px;color:var(--faint)">CACIB · CW · BOB</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2 class="sec" style="margin-top:0"><span class="no">✦</span>Родословная № 1</h2>
+            <div class="tree">
+              <div class="node self">
+                <div class="role">Собака</div>
+                <div class="nm">Гросс-Гербер Виктория</div>
+                <div class="id">RKF 5 412 883 · чип 643 094 100 112 034</div>
+              </div>
+              <div class="node">
+                <div class="role">Отец</div>
+                <div class="nm">Барон фон Хаус</div>
+                <div class="id">VDH 118 774</div>
+              </div>
+              <div class="node">
+                <div class="role">Мать</div>
+                <div class="nm">Лада Стар</div>
+                <div class="id">RKF 4 908 210</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2 class="sec" style="margin-top:0"><span class="no">✦</span>Документы</h2>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--rule-2)">
+                <span class="serif" style="font-family:var(--serif-2);font-size:16px;font-weight:600">Каталог выставки</span><span class="mono" style="color:var(--brass)">печать →</span></div>
+              <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--rule-2)">
+                <span style="font-family:var(--serif-2);font-size:16px;font-weight:600">Ринговая ведомость</span><span class="mono" style="color:var(--brass)">печать →</span></div>
+              <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--rule-2)">
+                <span style="font-family:var(--serif-2);font-size:16px;font-weight:600">Дипломы</span><span class="mono" style="color:var(--brass)">печать →</span></div>
+              <div style="display:flex;justify-content:space-between;padding:9px 0">
+                <span style="font-family:var(--serif-2);font-size:16px;font-weight:600">Отчёт для клуба</span><span class="mono" style="color:var(--brass)">печать →</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ornament">❖</div>
+      <div style="text-align:center;color:var(--faint);font-family:var(--mono);font-size:10px;letter-spacing:2px">
+        ЭТО ПРЕВЬЮ-МАКЕТ · ДАННЫЕ ВЫМЫШЛЕНЫ · ПЕРЕКЛЮЧИ «СВОДКА» В МЕНЮ
+      </div>
+    </section>
+
+    <!-- ---------- СВОДКА ---------- -->
+    <section class="sheet hide" id="dash">
+      <div class="masthead">
+        <div class="runhead"><span>Кинологический центр · Племенная книга</span><span>Лист 01</span></div>
+        <div class="title">Сводка</div>
+        <div class="subtitle">Состояние реестра на 3 августа 2026 года</div>
+      </div>
+
+      <div class="figures">
+        <div class="fig"><div class="n">142</div><div class="l">Собак в книге</div></div>
+        <div class="fig"><div class="n">58</div><div class="l">Владельцев</div></div>
+        <div class="fig"><div class="n">12</div><div class="l">Выставок</div></div>
+        <div class="fig debt"><div class="n">4 500 ₽</div><div class="l">Задолженность</div></div>
+      </div>
+
+      <h2 class="sec"><span class="no">§1</span>Ближайшие выставки</h2>
+      <table class="ledger">
+        <tr><th>Дата</th><th>Наименование</th><th>Ранг</th><th>Записано</th><th>Статус</th></tr>
+        <tr>
+          <td class="mono">20.09.2026</td>
+          <td><div class="ev">Осенняя Региональная</div><div class="meta">Москва · СК «Олимп»</div></td>
+          <td class="mono">САС</td>
+          <td class="mono">34</td>
+          <td><span class="stamp" style="transform:rotate(-2deg)">Запись</span></td>
+        </tr>
+        <tr>
+          <td class="mono">05.10.2026</td>
+          <td><div class="ev">Кубок Клуба · монопородная</div><div class="meta">Тверь · Манеж</div></td>
+          <td class="mono">КЧК</td>
+          <td class="mono">—</td>
+          <td><span class="stamp brass" style="transform:rotate(2deg)">Черновик</span></td>
+        </tr>
+        <tr>
+          <td class="mono">18.08.2026</td>
+          <td><div class="ev">Летняя CACIB</div><div class="meta">Москва · Крокус</div></td>
+          <td class="mono">CACIB</td>
+          <td class="mono">61</td>
+          <td><span class="stamp green" style="transform:rotate(-1.5deg)">Завершено</span></td>
+        </tr>
+      </table>
+
+      <h2 class="sec"><span class="no">§2</span>Недавние поступления</h2>
+      <table class="ledger">
+        <tr><th>Кличка</th><th>Порода</th><th>№ родословной</th><th>Владелец</th></tr>
+        <tr><td style="font-family:var(--serif-2);font-size:17px;font-weight:600">Гросс-Гербер Виктория</td><td>Немецкая овчарка</td><td class="mono">RKF 5 412 883</td><td class="meta">Петрова М. И.</td></tr>
+        <tr><td style="font-family:var(--serif-2);font-size:17px;font-weight:600">Айвенго Золотой</td><td>Лабрадор-ретривер</td><td class="mono">RKF 5 907 661</td><td class="meta">Смирнов А. В.</td></tr>
+        <tr><td style="font-family:var(--serif-2);font-size:17px;font-weight:600">Лорд оф Винтерфелл</td><td>Ротвейлер</td><td class="mono">RKF 5 118 204</td><td class="meta">Козлов Д. С.</td></tr>
+      </table>
+
+      <div class="ornament">❖</div>
+      <div style="text-align:center;color:var(--faint);font-family:var(--mono);font-size:10px;letter-spacing:2px">
+        ЭТО ПРЕВЬЮ-МАКЕТ · ДАННЫЕ ВЫМЫШЛЕНЫ
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  document.querySelectorAll('.viewbtn').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.viewbtn').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    const v=b.dataset.v;
+    document.getElementById('dash').classList.toggle('hide', v!=='dash');
+    document.getElementById('show').classList.toggle('hide', v!=='show');
+    window.scrollTo(0,0);
+  }));
+</script>
+</body>
+</html>

@@ -284,7 +284,7 @@ def authed(request: Request) -> bool:
 async def gate(request: Request, call_next):
     path = request.url.path
     public = (
-        path in ("/login", "/health", "/favicon.ico")
+        path in ("/login", "/health", "/favicon.ico", "/preview")
         or path.startswith("/static")
     )
     if not public and not authed(request):
@@ -372,6 +372,15 @@ def health():
 @app.get("/", response_class=HTMLResponse)
 def index():
     with open(INDEX, encoding="utf-8") as f:
+        return f.read()
+
+
+@app.get("/preview", response_class=HTMLResponse)
+def preview():
+    p = os.path.join(HERE, "preview.html")
+    if not os.path.exists(p):
+        return HTMLResponse("preview not found", status_code=404)
+    with open(p, encoding="utf-8") as f:
         return f.read()
 
 
