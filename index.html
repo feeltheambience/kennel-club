@@ -215,8 +215,16 @@ const $ = (s,r=document)=>r.querySelector(s);
 const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
 const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const app = $('#app');
-let REFS = {classes:[],grades:[],titles:[],ranks:[]};
+let REFS = {classes:[],grades:[],titles:[]};
+let BREEDS = [];      // [{id,name,breeds:[{id,name}]}]
+let RANKS = [];       // [{id,name,grades:[],titles:[]}]
+let ADDRESSES = [];   // [{id,name,address,phone,note}]
 let OWNERS_CACHE = [];
+async function loadRefs(){
+  [REFS,BREEDS,RANKS,ADDRESSES] = await Promise.all([
+    get('/api/refs'), get('/api/breeds'), get('/api/ranks'), get('/api/addresses')]);
+}
+const addrList = ()=>ADDRESSES.map(a=>a.address).filter(Boolean);
 
 async function api(url,opts){
   const r = await fetch(url,opts);
@@ -271,7 +279,7 @@ function formVals(root){
 const VIEWS={};
 let current='dashboard';
 async function boot(){
-  REFS = await get('/api/refs');
+  await loadRefs();
   $$('#tabs button').forEach(b=>b.onclick=()=>go(b.dataset.view));
   // deep link to event
   const h=location.hash.match(/event-(\d+)/);
@@ -351,7 +359,7 @@ async function ownerForm(id){
       ${field('В клубе с (дата)','member_since',o.member_since,{ph:'2020-01-15'})}
       ${field('Телефон','phone',o.phone,{type:'tel'})}
       ${field('E-mail','email',o.email,{type:'email'})}
-      ${field('Адрес','address',o.address,{full:true})}
+      ${field('Адрес','address',o.address,{full:true,list:addrList()})}
       ${field('Статус','status',o.status||'active',{opts:[['active','Активен'],['inactive','Неактивен']]})}
       ${field('Заметки','notes',o.notes,{full:true,rows:2})}
     </form></div>
@@ -411,18 +419,33 @@ VIEWS.dogs=async()=>{
   render();
 };
 async function ensureOwners(){ if(!OWNERS_CACHE.length) OWNERS_CACHE=await get('/api/owners'); return OWNERS_CACHE; }
-function breedGroups(){ return REFS._breedgroups||['FCI I Овчарки','FCI II Пинчеры, шнауцеры, молоссы','FCI III Терьеры','FCI IV Таксы','FCI V Шпицы и примитивные','FCI VI Гончие','FCI VII Легавые','FCI VIII Ретриверы, спаниели','FCI IX Декоративные','FCI X Борзые']; }
+function dogGroupId(breedId){ for(const g of BREEDS){ if(g.breeds.some(b=>String(b.id)===String(breedId))) return g.id; } return ''; }
+function breedOptions(groupId,selId){
+  const g=BREEDS.find(x=>String(x.id)===String(groupId));
+  const list=g?g.breeds:[];
+  return '<option value="">— порода —</option>'+list.map(b=>
+    `<option value="${b.id}" ${String(b.id)===String(selId||'')?'selected':''}>${esc(b.name)}</option>`).join('');
+}
+function onGroupChange(){ $('#f_breed_id').innerHTML=breedOptions($('#dog_group').value,''); }
 async function dogForm(id){
   await ensureOwners();
   let d={};
   if(id){ d=await get('/api/dogs/'+id); }
   const ownerOpts=[['','— не указан —'],...OWNERS_CACHE.map(o=>[o.id,o.full_name])];
+  const gid0=d.breed_id?dogGroupId(d.breed_id):'';
   openModal(`
     <div class="mhead"><h3>${id?'Собака: '+esc(d.name):'Новая собака'}</h3><button class="close" onclick="closeModal()">×</button></div>
     <div class="mbody"><form id="frm" class="formgrid">
       <div class="fieldset-title">Породные данные</div>
-      ${field('Группа пород','breed_group',d.breed_group,{list:breedGroups()})}
-      ${field('Порода','breed',d.breed,{req:true})}
+      <input type="hidden" name="breed" value="${esc(d.breed||'')}">
+      <input type="hidden" name="breed_group" value="${esc(d.breed_group||'')}">
+      <div class="field"><label>Группа пород</label>
+        <select id="dog_group" onchange="onGroupChange()">
+          <option value="">— группа —</option>
+          ${BREEDS.map(g=>`<option value="${g.id}" ${String(g.id)===String(gid0)?'selected':''}>${esc(g.name)}</option>`).join('')}
+        </select></div>
+      <div class="field"><label>Порода ${d.breed&&!d.breed_id?`<span class="sub">(тек.: ${esc(d.breed)})</span>`:''}</label>
+        <select id="f_breed_id" name="breed_id">${breedOptions(gid0,d.breed_id)}</select></div>
       ${field('Окрас','color',d.color)}
       ${field('Кличка','name',d.name,{req:true})}
       ${field('Пол','sex',d.sex,{opts:[['','—'],['male','Кобель'],['female','Сука']]})}
@@ -585,9 +608,9 @@ async function eventForm(id){
     <div class="mbody"><form id="frm" class="formgrid">
       ${field('Название','name',e.name,{req:true,full:true})}
       ${field('Тип','type',e.type||'show',{opts:Object.entries(EVTYPE)})}
-      ${field('Ранг','rank',e.rank,{list:REFS.ranks.map(r=>r.name)})}
+      ${field('Ранг выставки','rank_id',e.rank_id,{opts:[['','— не задан —'],...RANKS.map(r=>[r.id,r.name])]})}
       ${field('Дата','event_date',e.event_date,{ph:'2026-09-20'})}
-      ${field('Место проведения','place',e.place)}
+      ${field('Место проведения','place',e.place,{list:addrList()})}
       ${field('Судья(и)','judges',e.judges,{full:true,ph:'ФИО эксперта(ов)'})}
       ${field('Описание','description',e.description,{full:true,rows:2})}
     </form></div>
@@ -661,8 +684,9 @@ function renderEntries(e){
   const box=$('#entries');
   if(!e.entries.length){ box.innerHTML=emptyBox('🐕','Собаки не записаны'); return; }
   const judging=['judging','finished','reg_closed'].includes(e.status);
-  const gradeOpts=['',...REFS.grades.map(g=>g.name)];
-  const titleOpts=REFS.titles.map(t=>t.name);
+  // оценки/титулы: если у ранга задан свой набор — берём его, иначе все из справочника
+  const gradeOpts=['',...((e.rank_grades&&e.rank_grades.length)?e.rank_grades:REFS.grades.map(g=>g.name))];
+  const titleOpts=(e.rank_titles&&e.rank_titles.length)?e.rank_titles:REFS.titles.map(t=>t.name);
   // desktop table
   const rows=e.entries.map(x=>{
     const badge=`<span class="tag ${x.sex==='male'?'male':'female'}" style="font-size:11px">${x.sex==='male'?'К':x.sex==='female'?'С':'—'}</span>`;
@@ -746,39 +770,211 @@ async function submitEntries(eid){
   closeModal(); toast('Записано: '+r.added,'ok'); openEvent(eid);
 }
 
-// ============================================================ REFS
-const REFLABEL={classes:'Классы',grades:'Оценки',titles:'Титулы',ranks:'Ранги выставок'};
+// ============================================================ REFS / справочники
+const REFTABS=[['breeds','🌳 Породы'],['classes','Классы'],['grades','Оценки'],['titles','Титулы'],['ranks','🏆 Ранги выставок'],['addresses','📍 Адреса']];
+const KINDLABEL={classes:'Классы',grades:'Оценки',titles:'Титулы'};
+let refTab='breeds';
 VIEWS.refs=async()=>{
-  REFS=await get('/api/refs');
+  await loadRefs();
   app.innerHTML=`<h2 class="page">Справочники</h2>
-    <p class="sub" style="margin-top:-8px">Базовые значения РКФ/FCI. Добавляйте и удаляйте под свой клуб — изменения сразу видны в формах выставок.</p>
-    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:14px" id="refgrid"></div>`;
-  const g=$('#refgrid');
-  g.innerHTML=Object.keys(REFLABEL).map(kind=>`
-    <div class="panel"><h3>${REFLABEL[kind]}</h3>
-      <div id="ref_${kind}"></div>
-      <div class="bar" style="margin:10px 0 0">
-        <div class="search" style="flex:1"><input id="new_${kind}" placeholder="Добавить...">
-        </div><button class="btn sm" onclick="addRef('${kind}')">＋</button></div>
-    </div>`).join('');
-  Object.keys(REFLABEL).forEach(renderRef);
+    <div class="bar" style="gap:6px;flex-wrap:wrap">${REFTABS.map(([k,l])=>
+      `<button class="btn ${k===refTab?'':'ghost'} sm" onclick="setRefTab('${k}')">${l}</button>`).join('')}</div>
+    <div id="refbody"></div>`;
+  const box=$('#refbody');
+  if(refTab==='breeds') refBreeds(box);
+  else if(refTab==='ranks') refRanks(box);
+  else if(refTab==='addresses') refAddresses(box);
+  else refSimpleList(box,refTab);
 };
+function setRefTab(k){ refTab=k; VIEWS.refs(); }
+
+// ---- простые списки: классы / оценки / титулы ----
+function refSimpleList(box,kind){
+  const items=REFS[kind]||[];
+  box.innerHTML=`<div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <h3 style="margin:0">${KINDLABEL[kind]} <span class="sub">(${items.length})</span></h3>
+      <button class="btn ghost sm" onclick="bulkImport('${kind}')">⇪ Импорт списком</button></div>
+    <p class="sub" style="margin:0 0 6px">Простой список — добавляйте и удаляйте значения под свой клуб.</p>
+    <div id="ref_${kind}"></div>
+    <div class="bar" style="margin:12px 0 0">
+      <div class="search" style="flex:1"><input id="new_${kind}" placeholder="Добавить значение..." onkeydown="if(event.key==='Enter')addRef('${kind}')"></div>
+      <button class="btn sm" onclick="addRef('${kind}')">＋ Добавить</button></div></div>`;
+  renderRef(kind);
+}
 function renderRef(kind){
-  const box=$('#ref_'+kind);
-  box.innerHTML=REFS[kind].map(r=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:1px solid var(--line2)">
+  const box=$('#ref_'+kind); if(!box)return;
+  box.innerHTML=(REFS[kind]||[]).map(r=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid var(--line2)">
       <span>${esc(r.name)}</span>
-      <button class="icon-btn del" style="width:28px;height:28px;font-size:13px" onclick="delRef('${kind}',${r.id})">×</button>
+      <button class="icon-btn del" style="width:30px;height:30px;font-size:14px" onclick="delRef('${kind}',${r.id})">×</button>
     </div>`).join('')||'<div class="sub">Пусто</div>';
 }
 async function addRef(kind){
   const inp=$('#new_'+kind); const name=inp.value.trim(); if(!name)return;
   const r=await post('/api/refs/'+kind,{name}); REFS[kind].push({id:r.id,name:r.name});
-  inp.value=''; renderRef(kind);
+  inp.value=''; renderRef(kind); inp.focus();
 }
 async function delRef(kind,id){
   await del('/api/refs/'+kind+'/'+id);
   REFS[kind]=REFS[kind].filter(x=>x.id!==id); renderRef(kind);
+}
+function bulkImport(kind){
+  openModal(`<div class="mhead"><h3>Импорт: ${KINDLABEL[kind]}</h3><button class="close" onclick="closeModal()">×</button></div>
+    <div class="mbody"><p class="sub">Вставьте значения — по одному в строке. Дубли пропускаются.</p>
+      <textarea id="bulktext" rows="10" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit"></textarea></div>
+    <div class="mfoot"><button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="doBulk('${kind}')">Загрузить</button></div>`);
+}
+async function doBulk(kind){
+  const r=await post('/api/refs/'+kind+'/bulk',{text:$('#bulktext').value});
+  REFS=await get('/api/refs'); closeModal(); toast('Добавлено: '+r.added,'ok'); VIEWS.refs();
+}
+
+// ---- дерево пород ----
+function refBreeds(box){
+  box.innerHTML=`<p class="sub" style="margin-top:-4px">Группы FCI и породы внутри. Можно добавлять и переименовывать группы и породы, загружать списком.</p>
+    <div class="bar" style="margin:10px 0"><div class="search" style="flex:1">
+      <input id="new_group" placeholder="Новая группа пород..." onkeydown="if(event.key==='Enter')addGroup()"></div>
+      <button class="btn sm" onclick="addGroup()">＋ Группа</button></div>
+    <div id="tree"></div>`;
+  renderTree();
+}
+function renderTree(){
+  const t=$('#tree'); if(!t)return;
+  t.innerHTML=BREEDS.map(g=>`
+    <div class="panel" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <b style="font-size:15px">${esc(g.name)} <span class="sub">(${g.breeds.length})</span></b>
+        <div class="acts">
+          <button class="icon-btn" title="Переименовать" onclick="renameGroup(${g.id})">✏️</button>
+          <button class="icon-btn del" onclick="delGroup(${g.id})">🗑</button></div></div>
+      <div style="margin:9px 0 0;display:flex;flex-wrap:wrap;gap:6px">
+        ${g.breeds.map(b=>`<span class="tag grey" style="display:inline-flex;gap:6px;align-items:center">${esc(b.name)}
+          <span style="cursor:pointer;color:var(--red);font-weight:700" onclick="delBreed(${b.id})">×</span></span>`).join('')
+          ||'<span class="sub">пород нет</span>'}
+      </div>
+      <div class="bar" style="margin:10px 0 0">
+        <div class="search" style="flex:1"><input id="nb_${g.id}" placeholder="Добавить породу..." onkeydown="if(event.key==='Enter')addBreed(${g.id})"></div>
+        <button class="btn sm" onclick="addBreed(${g.id})">＋</button>
+        <button class="btn ghost sm" onclick="bulkBreeds(${g.id})">⇪ списком</button></div>
+    </div>`).join('')||emptyBox('🌳','Групп пока нет');
+}
+async function addGroup(){
+  const inp=$('#new_group'); const name=inp.value.trim(); if(!name)return;
+  await post('/api/breed-groups',{name}); BREEDS=await get('/api/breeds'); inp.value=''; renderTree();
+}
+async function renameGroup(id){
+  const g=BREEDS.find(x=>x.id===id); const name=prompt('Название группы:',g.name); if(name==null||!name.trim())return;
+  await post('/api/breed-groups',{id,name:name.trim()}); BREEDS=await get('/api/breeds'); renderTree();
+}
+async function delGroup(id){
+  if(!confirm('Удалить группу вместе со всеми породами внутри?'))return;
+  await del('/api/breed-groups/'+id); BREEDS=await get('/api/breeds'); renderTree();
+}
+async function addBreed(gid){
+  const inp=$('#nb_'+gid); const name=inp.value.trim(); if(!name)return;
+  await post('/api/breeds',{group_id:gid,name}); BREEDS=await get('/api/breeds'); renderTree();
+  setTimeout(()=>{const el=$('#nb_'+gid);if(el)el.focus();},0);
+}
+async function delBreed(id){
+  await del('/api/breeds/'+id); BREEDS=await get('/api/breeds'); renderTree();
+}
+function bulkBreeds(gid){
+  openModal(`<div class="mhead"><h3>Импорт пород в группу</h3><button class="close" onclick="closeModal()">×</button></div>
+    <div class="mbody"><p class="sub">По одной породе в строке. Дубли пропускаются.</p>
+      <textarea id="bulktext" rows="10" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit"></textarea></div>
+    <div class="mfoot"><button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="doBulkBreeds(${gid})">Загрузить</button></div>`);
+}
+async function doBulkBreeds(gid){
+  const r=await post('/api/breeds/bulk',{group_id:gid,text:$('#bulktext').value});
+  BREEDS=await get('/api/breeds'); closeModal(); toast('Добавлено: '+r.added,'ok'); renderTree();
+}
+
+// ---- ранги выставок (с наборами оценок и титулов) ----
+function refRanks(box){
+  box.innerHTML=`<p class="sub" style="margin-top:-4px">Для каждого ранга отметьте доступные <b>оценки</b> и <b>титулы</b> — именно они предлагаются при экспертизе и печатаются в дипломах и отчётах. Если ничего не отмечено — используются все.</p>
+    <div class="bar" style="margin:10px 0"><div class="search" style="flex:1">
+      <input id="new_rank" placeholder="Новый ранг выставки..." onkeydown="if(event.key==='Enter')addRank()"></div>
+      <button class="btn sm" onclick="addRank()">＋ Ранг</button></div>
+    <div id="ranks"></div>`;
+  renderRanks();
+}
+function renderRanks(){
+  const box=$('#ranks'); if(!box)return;
+  const allG=REFS.grades.map(g=>g.name), allT=REFS.titles.map(t=>t.name);
+  const chip=(rid,kind,n,on)=>`<span class="tag ${on?'green':'grey'}" style="cursor:pointer" onclick="toggleRank(${rid},'${kind}',${JSON.stringify(n)})">${on?'✓ ':''}${esc(n)}</span>`;
+  box.innerHTML=RANKS.map(r=>`
+    <div class="panel" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <b style="font-size:15px">${esc(r.name)}</b>
+        <div class="acts"><button class="icon-btn" onclick="renameRank(${r.id})">✏️</button>
+          <button class="icon-btn del" onclick="delRank(${r.id})">🗑</button></div></div>
+      <div class="sub" style="margin:10px 0 4px">Оценки${r.grades.length?'':' — <b>все</b>'}:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${allG.map(n=>chip(r.id,'grades',n,r.grades.includes(n))).join('')||'<span class=sub>справочник оценок пуст</span>'}</div>
+      <div class="sub" style="margin:12px 0 4px">Титулы${r.titles.length?'':' — <b>все</b>'}:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${allT.map(n=>chip(r.id,'titles',n,r.titles.includes(n))).join('')||'<span class=sub>справочник титулов пуст</span>'}</div>
+    </div>`).join('')||emptyBox('🏆','Рангов нет');
+}
+async function addRank(){
+  const inp=$('#new_rank'); const name=inp.value.trim(); if(!name)return;
+  await post('/api/ranks',{name,grades:[],titles:[]}); RANKS=await get('/api/ranks'); inp.value=''; renderRanks();
+}
+async function renameRank(id){
+  const r=RANKS.find(x=>x.id===id); const name=prompt('Название ранга:',r.name); if(name==null||!name.trim())return;
+  await post('/api/ranks',{id,name:name.trim(),grades:r.grades,titles:r.titles}); RANKS=await get('/api/ranks'); renderRanks();
+}
+async function delRank(id){
+  if(!confirm('Удалить ранг?'))return;
+  await del('/api/ranks/'+id); RANKS=await get('/api/ranks'); renderRanks();
+}
+async function toggleRank(id,kind,name){
+  const r=RANKS.find(x=>x.id===id); const set=new Set(r[kind]);
+  set.has(name)?set.delete(name):set.add(name); r[kind]=[...set];
+  renderRanks();
+  await post('/api/ranks',{id,name:r.name,grades:r.grades,titles:r.titles});
+}
+
+// ---- адреса ----
+function refAddresses(box){
+  box.innerHTML=`<p class="sub" style="margin-top:-4px">Общий справочник адресов — подставляется подсказками в адрес владельца и место проведения выставки.</p>
+    <div class="bar"><div class="hspace" style="flex:1"></div>
+      <button class="btn sm" onclick="addrForm()">＋ Адрес</button></div>
+    <div class="list" id="addrlist"></div>`;
+  renderAddresses();
+}
+function renderAddresses(){
+  const l=$('#addrlist'); if(!l)return;
+  l.innerHTML=ADDRESSES.map(a=>`
+    <div class="card"><div class="row1"><div>
+      <div class="title">${esc(a.name||a.address||'—')}</div>
+      <div class="meta">${a.name?esc(a.address||''):''}${a.phone?` · 📞 ${esc(a.phone)}`:''}${a.note?` · ${esc(a.note)}`:''}</div>
+    </div><div class="acts">
+      <button class="icon-btn" onclick="addrForm(${a.id})">✏️</button>
+      <button class="icon-btn del" onclick="delAddr(${a.id})">🗑</button></div></div></div>`).join('')
+    ||emptyBox('📍','Адресов пока нет');
+}
+function addrForm(id){
+  const a=id?ADDRESSES.find(x=>x.id===id):{};
+  openModal(`<div class="mhead"><h3>${id?'Адрес':'Новый адрес'}</h3><button class="close" onclick="closeModal()">×</button></div>
+    <div class="mbody"><form id="frm" class="formgrid">
+      ${field('Метка','name',a.name,{full:true,ph:'Клуб «Олимп» / г. Тверь'})}
+      ${field('Адрес','address',a.address,{full:true,rows:2})}
+      ${field('Телефон','phone',a.phone,{type:'tel'})}
+      ${field('Примечание','note',a.note)}
+    </form></div>
+    <div class="mfoot"><button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="saveAddr(${id||0})">Сохранить</button></div>`);
+}
+async function saveAddr(id){
+  const v=formVals($('#frm')); if(!v.address&&!v.name){toast('Заполните адрес','err');return;}
+  if(id)v.id=id;
+  await post('/api/addresses',v); ADDRESSES=await get('/api/addresses'); closeModal(); toast('Сохранено','ok'); renderAddresses();
+}
+async function delAddr(id){
+  if(!confirm('Удалить адрес?'))return;
+  await del('/api/addresses/'+id); ADDRESSES=await get('/api/addresses'); renderAddresses();
 }
 
 // ============================================================ misc

@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS dogs(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     breed_group TEXT,
     breed TEXT,
+    breed_id INTEGER,
     color TEXT,
     name TEXT NOT NULL,
     pedigree_number TEXT,
@@ -100,6 +101,7 @@ CREATE TABLE IF NOT EXISTS events(
     name TEXT NOT NULL,
     type TEXT DEFAULT 'show',   -- show | test | competition | other
     rank TEXT,
+    rank_id INTEGER,
     event_date TEXT,
     place TEXT,
     judges TEXT,
@@ -123,8 +125,41 @@ CREATE TABLE IF NOT EXISTS entries(
 
 CREATE TABLE IF NOT EXISTS refs(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    kind TEXT,   -- classes | grades | titles | ranks
+    kind TEXT,   -- classes | grades | titles
     name TEXT,
+    sort INTEGER DEFAULT 0
+);
+
+-- дерево пород: группы FCI → породы
+CREATE TABLE IF NOT EXISTS breed_groups(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    sort INTEGER DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS breeds(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER REFERENCES breed_groups(id) ON DELETE CASCADE,
+    name TEXT,
+    sort INTEGER DEFAULT 0
+);
+
+-- общий справочник адресов (владельцы + места проведения)
+CREATE TABLE IF NOT EXISTS addresses(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,       -- метка: «Клуб Олимп», «г. Тверь» и т.п.
+    address TEXT,
+    phone TEXT,
+    note TEXT,
+    sort INTEGER DEFAULT 0
+);
+
+-- ранги выставок: у каждого — набор доступных оценок и титулов (JSON-списки имён;
+-- пусто = «все»). От ранга зависит, что предлагается в экспертизе и печатается.
+CREATE TABLE IF NOT EXISTS ranks(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    grades TEXT DEFAULT '[]',
+    titles TEXT DEFAULT '[]',
     sort INTEGER DEFAULT 0
 );
 """
@@ -144,14 +179,57 @@ SEED_REFS = {
     "titles": [
         "CW (Победитель класса)", "ЮCAC", "CAC", "R.CAC", "CACIB", "R.CACIB",
         "ЮЛПП", "ЛПП (BOB)", "BOS (ЛПП прот. пола)", "ЛПК", "BIG", "BIS",
-        "ЮПК", "Кандидат в чемпионы",
-    ],
-    "ranks": [
-        "САС", "КЧК (Кандидат в чемпионы клуба)", "ЧК (Чемпион клуба)",
-        "ПК (Победитель клуба)", "CACIB", "Монопородная", "Специализированная",
-        "Региональная", "Национальная", "Интернациональная (CACIB)",
+        "ЮПК", "КЧК", "ПК", "Кандидат в чемпионы",
     ],
 }
+
+# Дерево пород — 10 групп FCI с типовым набором пород (заказчик заменит загрузкой файлов).
+SEED_BREEDS = {
+    "FCI I — Овчарки и скотогонные (кроме швейцарских)": [
+        "Немецкая овчарка", "Бельгийская овчарка (малинуа)", "Бордер-колли",
+        "Вельш-корги пемброк", "Шелти", "Босерон", "Австралийская овчарка"],
+    "FCI II — Пинчеры, шнауцеры, молоссы, швейцарские скотогонные": [
+        "Доберман", "Ротвейлер", "Боксёр", "Немецкий дог", "Ризеншнауцер",
+        "Цвергшнауцер", "Кане корсо", "Бульмастиф", "Бернский зенненхунд",
+        "Среднеазиатская овчарка", "Кавказская овчарка"],
+    "FCI III — Терьеры": [
+        "Джек-рассел-терьер", "Йоркширский терьер", "Стаффордширский бультерьер",
+        "Американский стаффордширский терьер", "Вест-хайленд-уайт-терьер", "Бультерьер"],
+    "FCI IV — Таксы": [
+        "Такса стандартная", "Такса миниатюрная", "Такса кроличья"],
+    "FCI V — Шпицы и примитивные": [
+        "Сибирский хаски", "Аляскинский маламут", "Самоедская собака",
+        "Померанский шпиц", "Акита-ину", "Сиба-ину", "Чау-чау", "Басенджи"],
+    "FCI VI — Гончие и родственные породы": [
+        "Бигль", "Бассет-хаунд", "Родезийский риджбек", "Далматин"],
+    "FCI VII — Легавые": [
+        "Английский сеттер", "Ирландский сеттер", "Пойнтер", "Веймаранер", "Курцхаар"],
+    "FCI VIII — Ретриверы, спаниели, водяные собаки": [
+        "Лабрадор-ретривер", "Голден-ретривер", "Английский кокер-спаниель",
+        "Американский кокер-спаниель", "Английский спрингер-спаниель"],
+    "FCI IX — Декоративные и собаки-компаньоны": [
+        "Французский бульдог", "Мопс", "Чихуахуа", "Пудель", "Ши-тцу",
+        "Мальтезе", "Пекинес", "Кавалер-кинг-чарльз-спаниель", "Бишон фризе"],
+    "FCI X — Борзые": [
+        "Русская псовая борзая", "Грейхаунд", "Уиппет", "Афганская борзая", "Салюки"],
+}
+
+# Ранги выставок: имя + доступные титулы (оценки по умолчанию — все).
+SEED_RANKS = [
+    ("САС (сертификатная)", ["CW (Победитель класса)", "ЮCAC", "CAC", "R.CAC",
+                             "ЛПП (BOB)", "BOS (ЛПП прот. пола)", "ЛПК"]),
+    ("CACIB (интернациональная)", ["CW (Победитель класса)", "ЮCAC", "CAC", "R.CAC",
+                                    "CACIB", "R.CACIB", "ЛПП (BOB)", "BOS (ЛПП прот. пола)",
+                                    "ЛПК", "BIG", "BIS"]),
+    ("КЧК (кандидат в чемпионы клуба)", ["CW (Победитель класса)", "КЧК",
+                                         "ЛПП (BOB)", "BOS (ЛПП прот. пола)"]),
+    ("ПК (победитель клуба)", ["CW (Победитель класса)", "ПК",
+                               "ЛПП (BOB)", "BOS (ЛПП прот. пола)"]),
+    ("Монопородная", ["CW (Победитель класса)", "ЛПП (BOB)", "BOS (ЛПП прот. пола)"]),
+    ("Региональная", ["CW (Победитель класса)", "CAC", "R.CAC", "ЛПП (BOB)"]),
+    ("Национальная", ["CW (Победитель класса)", "CAC", "R.CAC", "ЛПП (BOB)", "BOS (ЛПП прот. пола)"]),
+    ("Без сертификатов (оценочная)", []),
+]
 
 
 def init_db():
@@ -160,8 +238,8 @@ def init_db():
         # миграция: добить недостающие столбцы у существующих БД
         migrations = {
             "owners": {"member_no": "TEXT", "status": "TEXT", "notes": "TEXT"},
-            "dogs": {"dob": "TEXT", "notes": "TEXT"},
-            "events": {"type": "TEXT", "description": "TEXT"},
+            "dogs": {"dob": "TEXT", "notes": "TEXT", "breed_id": "INTEGER"},
+            "events": {"type": "TEXT", "description": "TEXT", "rank_id": "INTEGER"},
             "entries": {"titles": "TEXT", "remark": "TEXT", "placement": "INTEGER"},
         }
         for tbl, cols in migrations.items():
@@ -172,11 +250,25 @@ def init_db():
                         c.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {ddl}")
                     except sqlite3.OperationalError:
                         pass
-        # засев справочников
+        # засев простых справочников (classes/grades/titles)
         if c.execute("SELECT COUNT(*) FROM refs").fetchone()[0] == 0:
             for kind, names in SEED_REFS.items():
                 for i, n in enumerate(names):
                     c.execute("INSERT INTO refs(kind,name,sort) VALUES(?,?,?)", (kind, n, i))
+        # чистим устаревший kind='ranks' из refs (ранги переехали в свою таблицу)
+        c.execute("DELETE FROM refs WHERE kind='ranks'")
+        # засев дерева пород
+        if c.execute("SELECT COUNT(*) FROM breed_groups").fetchone()[0] == 0:
+            for gi, (gname, breeds) in enumerate(SEED_BREEDS.items()):
+                cur = c.execute("INSERT INTO breed_groups(name,sort) VALUES(?,?)", (gname, gi))
+                gid = cur.lastrowid
+                for bi, b in enumerate(breeds):
+                    c.execute("INSERT INTO breeds(group_id,name,sort) VALUES(?,?,?)", (gid, b, bi))
+        # засев рангов
+        if c.execute("SELECT COUNT(*) FROM ranks").fetchone()[0] == 0:
+            for ri, (rname, titles) in enumerate(SEED_RANKS):
+                c.execute("INSERT INTO ranks(name,grades,titles,sort) VALUES(?,?,?,?)",
+                          (rname, "[]", json.dumps(titles, ensure_ascii=False), ri))
         c.commit()
 
 
@@ -285,7 +377,7 @@ async def body(request: Request) -> dict:
 # =====================================================================
 #  REFS (справочники)
 # =====================================================================
-REF_KINDS = ("classes", "grades", "titles", "ranks")
+REF_KINDS = ("classes", "grades", "titles")
 
 
 def get_refs():
@@ -322,6 +414,214 @@ def del_ref(kind: str, rid: int):
         c.execute("DELETE FROM refs WHERE id=? AND kind=?", (rid, kind))
         c.commit()
     return {"ok": True}
+
+
+@app.post("/api/refs/{kind}/bulk")
+async def bulk_ref(kind: str, request: Request):
+    """Массовое добавление списком (по строке на значение). Дубли пропускаются."""
+    if kind not in REF_KINDS:
+        return JSONResponse({"error": "bad kind"}, status_code=400)
+    d = await body(request)
+    names = [x.strip() for x in (d.get("text") or "").splitlines() if x.strip()]
+    added = 0
+    with closing(db()) as c:
+        have = {r["name"] for r in c.execute("SELECT name FROM refs WHERE kind=?", (kind,))}
+        mx = c.execute("SELECT COALESCE(MAX(sort),0) FROM refs WHERE kind=?", (kind,)).fetchone()[0]
+        for n in names:
+            if n in have:
+                continue
+            mx += 1
+            c.execute("INSERT INTO refs(kind,name,sort) VALUES(?,?,?)", (kind, n, mx))
+            have.add(n); added += 1
+        c.commit()
+    return {"ok": True, "added": added}
+
+
+# =====================================================================
+#  BREEDS (дерево: группы FCI → породы)
+# =====================================================================
+@app.get("/api/breeds")
+def api_breeds():
+    with closing(db()) as c:
+        groups = rows(c.execute("SELECT * FROM breed_groups ORDER BY sort, id"))
+        by_g = {}
+        for b in c.execute("SELECT * FROM breeds ORDER BY name COLLATE NOCASE"):
+            by_g.setdefault(b["group_id"], []).append({"id": b["id"], "name": b["name"]})
+        for g in groups:
+            g["breeds"] = by_g.get(g["id"], [])
+        return groups
+
+
+@app.post("/api/breed-groups")
+async def save_breed_group(request: Request):
+    d = await body(request)
+    name = (d.get("name") or "").strip()
+    if not name:
+        return JSONResponse({"error": "empty"}, status_code=400)
+    with closing(db()) as c:
+        if d.get("id"):
+            c.execute("UPDATE breed_groups SET name=? WHERE id=?", (name, d["id"]))
+            gid = d["id"]
+        else:
+            mx = c.execute("SELECT COALESCE(MAX(sort),0)+1 FROM breed_groups").fetchone()[0]
+            gid = c.execute("INSERT INTO breed_groups(name,sort) VALUES(?,?)", (name, mx)).lastrowid
+        c.commit()
+    return {"id": gid, "name": name}
+
+
+@app.delete("/api/breed-groups/{gid}")
+def del_breed_group(gid: int):
+    with closing(db()) as c:
+        c.execute("DELETE FROM breeds WHERE group_id=?", (gid,))
+        c.execute("DELETE FROM breed_groups WHERE id=?", (gid,))
+        c.commit()
+    return {"ok": True}
+
+
+@app.post("/api/breeds")
+async def save_breed(request: Request):
+    d = await body(request)
+    name = (d.get("name") or "").strip()
+    gid = d.get("group_id")
+    if not name or not gid:
+        return JSONResponse({"error": "нужны название и группа"}, status_code=400)
+    with closing(db()) as c:
+        if d.get("id"):
+            c.execute("UPDATE breeds SET name=?, group_id=? WHERE id=?", (name, gid, d["id"]))
+            bid = d["id"]
+        else:
+            bid = c.execute("INSERT INTO breeds(group_id,name) VALUES(?,?)", (gid, name)).lastrowid
+        c.commit()
+    return {"id": bid, "name": name}
+
+
+@app.delete("/api/breeds/{bid}")
+def del_breed(bid: int):
+    with closing(db()) as c:
+        c.execute("DELETE FROM breeds WHERE id=?", (bid,))
+        c.commit()
+    return {"ok": True}
+
+
+@app.post("/api/breeds/bulk")
+async def bulk_breeds(request: Request):
+    """Добавить породы списком в группу (строка = порода)."""
+    d = await body(request)
+    gid = d.get("group_id")
+    names = [x.strip() for x in (d.get("text") or "").splitlines() if x.strip()]
+    if not gid:
+        return JSONResponse({"error": "нет группы"}, status_code=400)
+    added = 0
+    with closing(db()) as c:
+        have = {r["name"] for r in c.execute("SELECT name FROM breeds WHERE group_id=?", (gid,))}
+        for n in names:
+            if n in have:
+                continue
+            c.execute("INSERT INTO breeds(group_id,name) VALUES(?,?)", (gid, n))
+            have.add(n); added += 1
+        c.commit()
+    return {"ok": True, "added": added}
+
+
+# =====================================================================
+#  ADDRESSES (общий справочник адресов)
+# =====================================================================
+ADDR_FIELDS = ["name", "address", "phone", "note"]
+
+
+@app.get("/api/addresses")
+def api_addresses():
+    with closing(db()) as c:
+        return rows(c.execute("SELECT * FROM addresses ORDER BY name COLLATE NOCASE, id"))
+
+
+@app.post("/api/addresses")
+async def save_address(request: Request):
+    d = await body(request)
+    vals = {f: (d.get(f) or "").strip() for f in ADDR_FIELDS}
+    if not vals["address"] and not vals["name"]:
+        return JSONResponse({"error": "пустой адрес"}, status_code=400)
+    with closing(db()) as c:
+        if d.get("id"):
+            sets = ",".join(f"{f}=?" for f in ADDR_FIELDS)
+            c.execute(f"UPDATE addresses SET {sets} WHERE id=?",
+                      [vals[f] for f in ADDR_FIELDS] + [d["id"]])
+            aid = d["id"]
+        else:
+            cols = ",".join(ADDR_FIELDS)
+            ph = ",".join("?" for _ in ADDR_FIELDS)
+            aid = c.execute(f"INSERT INTO addresses({cols}) VALUES({ph})",
+                            [vals[f] for f in ADDR_FIELDS]).lastrowid
+        c.commit()
+    return {"id": aid}
+
+
+@app.delete("/api/addresses/{aid}")
+def del_address(aid: int):
+    with closing(db()) as c:
+        c.execute("DELETE FROM addresses WHERE id=?", (aid,))
+        c.commit()
+    return {"ok": True}
+
+
+# =====================================================================
+#  RANKS (ранги выставок: имя + доступные оценки и титулы)
+# =====================================================================
+def _json_list(s):
+    try:
+        v = json.loads(s or "[]")
+        return v if isinstance(v, list) else []
+    except Exception:
+        return []
+
+
+@app.get("/api/ranks")
+def api_ranks():
+    with closing(db()) as c:
+        out = []
+        for r in c.execute("SELECT * FROM ranks ORDER BY sort, id"):
+            out.append({"id": r["id"], "name": r["name"],
+                        "grades": _json_list(r["grades"]), "titles": _json_list(r["titles"])})
+        return out
+
+
+@app.post("/api/ranks")
+async def save_rank(request: Request):
+    d = await body(request)
+    name = (d.get("name") or "").strip()
+    if not name:
+        return JSONResponse({"error": "empty"}, status_code=400)
+    grades = json.dumps([x for x in (d.get("grades") or []) if x], ensure_ascii=False)
+    titles = json.dumps([x for x in (d.get("titles") or []) if x], ensure_ascii=False)
+    with closing(db()) as c:
+        if d.get("id"):
+            c.execute("UPDATE ranks SET name=?, grades=?, titles=? WHERE id=?",
+                      (name, grades, titles, d["id"]))
+            rid = d["id"]
+        else:
+            mx = c.execute("SELECT COALESCE(MAX(sort),0)+1 FROM ranks").fetchone()[0]
+            rid = c.execute("INSERT INTO ranks(name,grades,titles,sort) VALUES(?,?,?,?)",
+                            (name, grades, titles, mx)).lastrowid
+        c.commit()
+    return {"id": rid}
+
+
+@app.delete("/api/ranks/{rid}")
+def del_rank(rid: int):
+    with closing(db()) as c:
+        c.execute("DELETE FROM ranks WHERE id=?", (rid,))
+        c.commit()
+    return {"ok": True}
+
+
+def rank_sets(c, rank_id):
+    """Вернуть (grades, titles) для ранга; пустые списки = «все» (None-заглушка не нужна)."""
+    if not rank_id:
+        return [], []
+    r = c.execute("SELECT grades,titles FROM ranks WHERE id=?", (rank_id,)).fetchone()
+    if not r:
+        return [], []
+    return _json_list(r["grades"]), _json_list(r["titles"])
 
 
 # =====================================================================
@@ -378,8 +678,8 @@ def del_owner(oid: int):
 # =====================================================================
 #  DOGS (собаки)
 # =====================================================================
-DOG_FIELDS = ["breed_group", "breed", "color", "name", "pedigree_number", "chip",
-              "tattoo", "sex", "dob", "dam_pedigree", "dam_name", "sire_pedigree",
+DOG_FIELDS = ["breed_group", "breed", "breed_id", "color", "name", "pedigree_number",
+              "chip", "tattoo", "sex", "dob", "dam_pedigree", "dam_name", "sire_pedigree",
               "sire_name", "breeder", "owner_id", "notes"]
 
 
@@ -429,6 +729,16 @@ async def save_dog(request: Request):
     if not vals.get("owner_id"):
         vals["owner_id"] = None
     with closing(db()) as c:
+        # если выбрана порода из дерева — подтягиваем текст породы и группы (снимок)
+        if vals.get("breed_id"):
+            b = c.execute("""SELECT b.name AS bn, g.name AS gn
+                             FROM breeds b JOIN breed_groups g ON g.id=b.group_id
+                             WHERE b.id=?""", (vals["breed_id"],)).fetchone()
+            if b:
+                vals["breed"] = b["bn"]
+                vals["breed_group"] = b["gn"]
+        else:
+            vals["breed_id"] = None
         if d.get("id"):
             sets = ",".join(f"{f}=?" for f in DOG_FIELDS)
             c.execute(f"UPDATE dogs SET {sets} WHERE id=?",
@@ -525,7 +835,7 @@ def del_payment(pid: int):
 # =====================================================================
 #  EVENTS (мероприятия / выставки)
 # =====================================================================
-EVENT_FIELDS = ["name", "type", "rank", "event_date", "place", "judges",
+EVENT_FIELDS = ["name", "type", "rank", "rank_id", "event_date", "place", "judges",
                 "status", "description"]
 
 STATUS_FLOW = ["draft", "reg_open", "reg_closed", "judging", "finished"]
@@ -547,6 +857,9 @@ def get_event(eid: int):
         if not e:
             return JSONResponse({"error": "not found"}, status_code=404)
         e["entries"] = event_entries(c, eid)
+        rg, rt = rank_sets(c, e.get("rank_id"))
+        e["rank_grades"] = rg   # пусто = использовать все оценки
+        e["rank_titles"] = rt   # пусто = использовать все титулы
         e["stats"] = {
             "total": len(e["entries"]),
             "graded": sum(1 for x in e["entries"] if x.get("grade")),
@@ -584,6 +897,13 @@ async def save_event(request: Request):
     if not vals.get("type"):
         vals["type"] = "show"
     with closing(db()) as c:
+        # ранг из справочника → подтягиваем имя ранга (снимок)
+        if vals.get("rank_id"):
+            r = c.execute("SELECT name FROM ranks WHERE id=?", (vals["rank_id"],)).fetchone()
+            if r:
+                vals["rank"] = r["name"]
+        else:
+            vals["rank_id"] = None
         if d.get("id"):
             sets = ",".join(f"{f}=?" for f in EVENT_FIELDS)
             c.execute(f"UPDATE events SET {sets} WHERE id=?",

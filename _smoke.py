@@ -101,4 +101,56 @@ ok(not any(x["name"]=="ТЕСТ-ТИТУЛ" for x in c.get("/api/refs").json()["
 dash = c.get("/api/dashboard").json()
 ok(dash["dogs"]==3 and dash["owners"]==1 and dash["debt"]==1500, "дашборд считает корректно")
 
+# =============== НОВЫЕ СПРАВОЧНИКИ ===============
+# --- дерево пород ---
+breeds = c.get("/api/breeds").json()
+ok(len(breeds)==10, f"засеяно 10 групп FCI ({len(breeds)})")
+ok(all("breeds" in g for g in breeds) and sum(len(g["breeds"]) for g in breeds)>40, "в группах есть породы")
+# добавить группу и породу
+gid = c.post("/api/breed-groups", json={"name":"Тест-группа"}).json()["id"]
+bid = c.post("/api/breeds", json={"group_id":gid,"name":"Тест-порода"}).json()["id"]
+ok(gid and bid, "группа и порода добавлены")
+# переименовать группу
+c.post("/api/breed-groups", json={"id":gid,"name":"Тест-группа 2"})
+ok(any(g["id"]==gid and g["name"]=="Тест-группа 2" for g in c.get("/api/breeds").json()), "группа переименована")
+# bulk пород
+r = c.post("/api/breeds/bulk", json={"group_id":gid,"text":"Порода А\nПорода Б\nПорода А"}).json()
+ok(r["added"]==2, "bulk пород: 2 добавлено (дубль пропущен)")
+# собака с breed_id → резолв текста породы/группы
+d4 = c.post("/api/dogs", json={"name":"Тестик","breed_id":bid,"sex":"male"}).json()["id"]
+dog4 = c.get(f"/api/dogs/{d4}").json()
+ok(dog4["breed"]=="Тест-порода" and dog4["breed_group"]=="Тест-группа 2", f"breed_id → текст ({dog4['breed']}/{dog4['breed_group']})")
+# удаление группы каскадит породы
+c.delete(f"/api/breed-groups/{gid}")
+ok(not any(g["id"]==gid for g in c.get("/api/breeds").json()), "группа удалена с породами")
+
+# --- адреса ---
+aid = c.post("/api/addresses", json={"name":"Клуб Олимп","address":"Москва, ул. Спортивная 1","phone":"+7495"}).json()["id"]
+ok(any(a["id"]==aid for a in c.get("/api/addresses").json()), "адрес создан")
+c.delete(f"/api/addresses/{aid}")
+ok(not any(a["id"]==aid for a in c.get("/api/addresses").json()), "адрес удалён")
+
+# --- ранги со связями оценок/титулов ---
+ranks = c.get("/api/ranks").json()
+ok(len(ranks)>=5, f"ранги засеяны ({len(ranks)})")
+sac = next((r for r in ranks if r["name"].startswith("САС")), None)
+ok(sac and "CAC" in sac["titles"] and len(sac["grades"])==0, "у ранга САС заданы титулы, оценки=все")
+# ранги вычищены из refs
+ok("ranks" not in c.get("/api/refs").json(), "ranks убран из общих справочников")
+# создать ранг с ограниченными оценками/титулами
+rid = c.post("/api/ranks", json={"name":"Тест-ранг","grades":["Отлично","Хорошо"],"titles":["CAC"]}).json()["id"]
+# событие с этим рангом → get_event отдаёт rank_grades/rank_titles
+eid2 = c.post("/api/events", json={"name":"Событие с рангом","rank_id":rid,"event_date":"2026-10-01"}).json()["id"]
+ev2 = c.get(f"/api/events/{eid2}").json()
+ok(ev2["rank"]=="Тест-ранг", "имя ранга подтянулось в событие")
+ok(ev2["rank_grades"]==["Отлично","Хорошо"] and ev2["rank_titles"]==["CAC"], "событие отдаёт оценки/титулы ранга")
+# toggle grades/titles через save
+c.post("/api/ranks", json={"id":rid,"name":"Тест-ранг","grades":["Отлично"],"titles":[]})
+ev2 = c.get(f"/api/events/{eid2}").json()
+ok(ev2["rank_grades"]==["Отлично"] and ev2["rank_titles"]==[], "изменение набора ранга отражается в событии")
+
+# --- bulk импорт списка (титулы) ---
+r = c.post("/api/refs/titles/bulk", json={"text":"НОВ-ТИТУЛ-1\nНОВ-ТИТУЛ-2\nCAC"}).json()
+ok(r["added"]==2, "bulk титулов: 2 (существующий CAC пропущен)")
+
 print("\nВСЕ ТЕСТЫ ПРОЙДЕНЫ ✅")
