@@ -210,6 +210,7 @@ table.data tr:hover td{background:#fbf8f1}
 table.data td .in{padding:7px 9px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;width:100%;
   background:var(--panel);font-family:inherit;transition:.14s}
 table.data td .in:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(47,107,79,.12);outline:none}
+table.data td .in.inplace{width:56px}
 
 /* ---------- event detail: степпер жизненного цикла ---------- */
 .flow{display:flex;gap:0;flex-wrap:wrap;margin:16px 0 4px;
@@ -276,6 +277,54 @@ table.data td .in:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(47,1
   .flow .step{min-width:0;padding:8px 4px;font-size:10.5px}
   .flow .step::before{width:16px;height:16px;margin-bottom:4px}
   .flow .step.done::before{line-height:12px;font-size:10px}
+}
+/* ---------- смартфоны: доводка ---------- */
+@media(max-width:720px){
+  /* поля 16px — иначе iOS зумит при фокусе */
+  .field input,.field select,.field textarea,.search input,select.filter{font-size:16px}
+  /* тач-цели крупнее */
+  .icon-btn{width:40px;height:40px;font-size:16px}
+  .btn{padding:12px 18px}
+  .btn.sm{padding:9px 14px}
+  h2.page{font-size:22px}
+  .brand .txt{font-size:16.5px}
+
+  /* блоки «Документы» и «Управление этапами» — кнопки во всю ширину */
+  .docbtns{flex-direction:column;gap:8px}
+  .docbtns .btn,.docbtns a.btn{width:100%;justify-content:center}
+  .kv{grid-template-columns:1fr;gap:2px 0}
+  .kv dt{margin-top:8px;font-size:12px}
+  .kv dd{padding-bottom:4px;border-bottom:1px solid var(--line2)}
+
+  /* ТАБЛИЦЫ → КАРТОЧКИ (запись/экспертиза, история собаки) */
+  .tablewrap{border:0;background:none;box-shadow:none;overflow:visible;border-radius:0}
+  table.data{display:block}
+  table.data tr:has(th){display:none}                 /* прячем строку заголовков */
+  table.data tr{display:block;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);box-shadow:var(--shadow);padding:4px 15px;margin-bottom:11px}
+  table.data td{display:block;border:0;white-space:normal;padding:9px 0;
+    border-bottom:1px solid var(--line2)}
+  table.data tr td.rowdel,table.data tr td:last-child{border-bottom:0}
+  table.data td::before{content:attr(data-label);display:block;font-size:10.5px;color:var(--muted);
+    font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px}
+  table.data td[data-label='']::before,table.data td:not([data-label])::before{display:none}
+  table.data td .in{width:100%!important}
+  table.data td.c{padding-top:12px}
+  table.data td.c::before{color:var(--muted)}
+  table.data td.c{font-family:var(--serif);font-size:15px;color:var(--green-d);font-weight:700}
+  .rowdel{text-align:right;padding-top:6px}
+  .rowdel .icon-btn{width:auto;height:40px;padding:0 18px;gap:6px}
+  .rowdel .icon-btn::after{content:'Убрать';font-size:13px;font-weight:600}
+
+  /* модалка — как нижний лист (bottom sheet) */
+  .overlay{align-items:flex-end;padding:0}
+  .modal,.modal.wide{width:100%;max-height:92vh;border-radius:20px 20px 0 0;
+    display:flex;flex-direction:column;animation:sheet .26s ease}
+  .modal .mhead{flex-shrink:0;border-radius:0}
+  .modal .mbody{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1}
+  .modal .mfoot{flex-shrink:0}
+  .modal .mfoot .btn{flex:1;justify-content:center}
+  @keyframes sheet{from{transform:translateY(100%);opacity:.6}to{transform:none;opacity:1}}
 }
 @media(min-width:721px){ nav.tabs button .ti{display:none} }
 .hide{display:none!important}
@@ -587,8 +636,8 @@ async function delDog(id){
 }
 async function dogCard(id){
   const d=await get('/api/dogs/'+id);
-  const ev=(d.events||[]).map(e=>`<tr><td>${esc(e.event_date||'')}</td><td>${esc(e.name)}</td>
-    <td>${esc(e.class_name||'')}</td><td>${esc(e.grade||'')}</td><td>${esc(e.titles||'')}</td></tr>`).join('')
+  const ev=(d.events||[]).map(e=>`<tr><td data-label="Дата">${esc(e.event_date||'')}</td><td data-label="Мероприятие">${esc(e.name)}</td>
+    <td data-label="Класс">${esc(e.class_name||'')}</td><td data-label="Оценка">${esc(e.grade||'')}</td><td data-label="Титулы">${esc(e.titles||'')}</td></tr>`).join('')
     || '<tr><td colspan=5 class=sub>Ещё не участвовала</td></tr>';
   openModal(`
     <div class="mhead"><h3>${esc(d.name)}</h3><button class="close" onclick="closeModal()">×</button></div>
@@ -798,18 +847,18 @@ function renderEntries(e){
     const badge=`<span class="tag ${x.sex==='male'?'male':'female'}" style="font-size:11px">${x.sex==='male'?'К':x.sex==='female'?'С':'—'}</span>`;
     if(judging){
       return `<tr>
-        <td class="c">${x.catalog_no||'—'}</td>
-        <td><b>${esc(x.dog_name)}</b> ${badge}<br><span class="sub">${esc(x.breed||'')}</span></td>
-        <td>${esc(x.class_name||'')}</td>
-        <td><select class="in" onchange="updEntry(${x.id},'grade',this.value)">
+        <td class="c" data-label="№">${x.catalog_no||'—'}</td>
+        <td data-label="Собака"><b>${esc(x.dog_name)}</b> ${badge}<br><span class="sub">${esc(x.breed||'')}</span></td>
+        <td data-label="Класс">${esc(x.class_name||'')}</td>
+        <td data-label="Оценка"><select class="in" onchange="updEntry(${x.id},'grade',this.value)">
           ${gradeOpts.map(g=>`<option ${g===(x.grade||'')?'selected':''}>${esc(g)}</option>`).join('')}</select></td>
-        <td><input class="in" style="width:52px" type="number" min="1" max="20" value="${x.placement||''}"
+        <td data-label="Место"><input class="in inplace" type="number" min="1" max="20" value="${x.placement||''}"
             onchange="updEntry(${x.id},'placement',this.value)"></td>
-        <td><input class="in" list="dl_titles" value="${esc(x.titles||'')}" placeholder="титулы"
+        <td data-label="Титулы"><input class="in" list="dl_titles" value="${esc(x.titles||'')}" placeholder="титулы"
             onchange="updEntry(${x.id},'titles',this.value)"></td>
-        <td><input class="in" value="${esc(x.remark||'')}" placeholder="описание"
+        <td data-label="Описание"><input class="in" value="${esc(x.remark||'')}" placeholder="описание"
             onchange="updEntry(${x.id},'remark',this.value)"></td>
-        <td><button class="icon-btn del" onclick="delEntry(${x.id},${e.id})">🗑</button></td></tr>`;
+        <td class="rowdel"><button class="icon-btn del" onclick="delEntry(${x.id},${e.id})">🗑</button></td></tr>`;
     }
     const clsSel=['draft','reg_open'].includes(e.status)
       ? `<select class="in" onchange="updEntry(${x.id},'class_name',this.value)">
@@ -817,11 +866,11 @@ function renderEntries(e){
           ${REFS.classes.map(c=>`<option ${c.name===(x.class_name||'')?'selected':''}>${esc(c.name)}</option>`).join('')}</select>`
       : esc(x.class_name||'');
     return `<tr>
-      <td class="c">${x.catalog_no||'—'}</td>
-      <td><b>${esc(x.dog_name)}</b> ${badge}<br><span class="sub">${esc(x.breed||'')} · ${esc(x.owner_name||'')}</span></td>
-      <td>${clsSel}</td>
-      <td>${esc(x.pedigree_number||'')}</td>
-      <td><button class="icon-btn del" onclick="delEntry(${x.id},${e.id})">🗑</button></td></tr>`;
+      <td class="c" data-label="№">${x.catalog_no||'—'}</td>
+      <td data-label="Собака"><b>${esc(x.dog_name)}</b> ${badge}<br><span class="sub">${esc(x.breed||'')} · ${esc(x.owner_name||'')}</span></td>
+      <td data-label="Класс">${clsSel}</td>
+      <td data-label="Родословная">${esc(x.pedigree_number||'')}</td>
+      <td class="rowdel"><button class="icon-btn del" onclick="delEntry(${x.id},${e.id})">🗑</button></td></tr>`;
   }).join('');
   const head=judging
     ? `<tr><th>№</th><th>Собака</th><th>Класс</th><th>Оценка</th><th>Место</th><th>Титулы</th><th>Описание</th><th></th></tr>`
