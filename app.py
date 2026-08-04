@@ -297,27 +297,44 @@ async def gate(request: Request, call_next):
 LOGIN_HTML = """<!doctype html><html lang=ru><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <title>Вход — Кинологический центр</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{color-scheme:light}
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;
-  background:linear-gradient(135deg,#f2f7f4,#e8eef7);min-height:100vh;
-  display:flex;align-items:center;justify-content:center;color:#233}
-.card{background:#fff;border:1px solid #e4e9ef;border-radius:18px;
-  box-shadow:0 12px 40px rgba(40,70,90,.10);padding:34px 30px;width:min(92vw,360px);text-align:center}
-.logo{font-size:44px;line-height:1}
-h1{font-size:19px;margin:12px 0 2px}
-p{color:#7a8794;font-size:13px;margin:0 0 20px}
-input{width:100%;padding:13px 14px;border:1px solid #d5dde6;border-radius:11px;
-  font-size:16px;margin-bottom:12px;outline:none}
-input:focus{border-color:#4a90a4;box-shadow:0 0 0 3px rgba(74,144,164,.15)}
-button{width:100%;padding:13px;border:0;border-radius:11px;background:#3f8f78;
-  color:#fff;font-size:15px;font-weight:600;cursor:pointer}
-button:hover{background:#347e69}
-.err{color:#c0392b;font-size:13px;min-height:18px;margin-bottom:8px}
+body{margin:0;font-family:'Golos Text',-apple-system,Segoe UI,Roboto,sans-serif;
+  background:
+    radial-gradient(900px 500px at 100% -10%, #efe7d4 0%, transparent 58%),
+    radial-gradient(800px 460px at -10% 110%, #e8efe4 0%, transparent 55%),
+    #f4f0e8;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;color:#2b2722;padding:18px}
+.card{position:relative;background:#fffdf8;border:1px solid #e8e1d2;border-radius:22px;
+  box-shadow:0 24px 60px rgba(50,40,22,.16);padding:40px 32px 34px;width:min(94vw,372px);text-align:center;overflow:hidden}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;
+  background:linear-gradient(90deg,#2f6b4f,#c39a44,#b0803c)}
+.logo{width:64px;height:70px;margin:0 auto 4px;display:block;filter:drop-shadow(0 3px 5px rgba(70,54,30,.2))}
+h1{font-family:'Playfair Display',Georgia,serif;font-size:23px;margin:8px 0 2px;font-weight:700;letter-spacing:.2px}
+p{color:#8a8374;font-size:13.5px;margin:0 0 22px}
+input{width:100%;padding:13px 15px;border:1px solid #e0d8c7;border-radius:12px;
+  font-size:16px;margin-bottom:12px;outline:none;background:#fff;font-family:inherit;transition:.15s}
+input:focus{border-color:#2f6b4f;box-shadow:0 0 0 3px rgba(47,107,79,.14)}
+button{width:100%;padding:13px;border:0;border-radius:12px;background:#2f6b4f;
+  color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;
+  box-shadow:0 3px 8px rgba(47,107,79,.3);transition:.15s}
+button:hover{background:#255a42}
+.err{color:#b23a48;font-size:13px;min-height:18px;margin-bottom:8px;font-weight:500}
 </style></head><body>
 <form class=card method=post action=/login>
-  <div class=logo>🐕</div>
+  <svg class=logo viewBox="0 0 40 44" aria-hidden="true">
+    <path d="M14 29 L11 43 L17.5 38.5 L20 44 L20 29 Z" fill="#b0803c"/>
+    <path d="M26 29 L29 43 L22.5 38.5 L20 44 L20 29 Z" fill="#9a6d2f"/>
+    <circle cx="20" cy="17" r="15" fill="#2f6b4f"/>
+    <circle cx="20" cy="17" r="15" fill="none" stroke="#c39a44" stroke-width="1.2" stroke-dasharray="2.2 2.2"/>
+    <circle cx="20" cy="17" r="9.4" fill="#f4f0e8"/>
+    <g fill="#2f6b4f"><ellipse cx="20" cy="19.2" rx="3.3" ry="2.7"/>
+      <circle cx="15.8" cy="15.2" r="1.5"/><circle cx="20" cy="13.7" r="1.6"/><circle cx="24.2" cy="15.2" r="1.5"/></g>
+  </svg>
   <h1>Кинологический центр</h1>
   <p>Учёт клуба и проведение выставок</p>
   <div class=err>__ERR__</div>
